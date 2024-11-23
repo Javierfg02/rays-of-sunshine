@@ -1,2 +1,5 @@
-# Rays-of-Sunshine
-CSCI1230 Final Project
+# Rays of Sunshine
+
+Graphics final project
+
+- Amaris, Dorinda, Javier
