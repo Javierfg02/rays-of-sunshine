@@ -9,19 +9,9 @@
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
 
-    QCommandLineParser parser;
-    parser.addPositionalArgument("input", "Input scene filename (e.g. ambient.json)");
-    parser.addPositionalArgument("output", "Output image filename (e.g. ambient.png)");
-    parser.process(a);
-
-    const QStringList args = parser.positionalArguments();
-    if (args.size() >= 2) {
-        settings.inputFile = args.at(0).toStdString();
-        settings.outputFile = args.at(1).toStdString();
-    } else {
-        std::cerr << "Usage: " << argv[0] << " <input.json> <output.png>" << std::endl;
-        return 1;
-    }
+    QCoreApplication::setApplicationName("Ray of Sunshine");
+    QCoreApplication::setOrganizationName("CS 1230");
+    QCoreApplication::setApplicationVersion(QT_VERSION_STR);
 
     QSurfaceFormat fmt;
     fmt.setVersion(4, 1);
@@ -33,5 +23,7 @@ int main(int argc, char *argv[]) {
     w.resize(800, 600);
     w.show();
 
-    return a.exec();
+    int return_val = a.exec();
+    w.finish();
+    return return_val;
 }

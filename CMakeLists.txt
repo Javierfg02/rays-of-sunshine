@@ -27,11 +27,17 @@ include_directories(src)
 add_executable(${PROJECT_NAME}
     src/main.cpp
 
+    # .cpp
     src/mainwindow.cpp
+    src/settings.cpp
+
     src/utils/scenefilereader.cpp
     src/utils/sceneparser.cpp
 
+    # .h
     src/mainwindow.h
+    src/settings.h
+
     src/utils/scenedata.h
     src/utils/scenefilereader.h
     src/utils/sceneparser.h
