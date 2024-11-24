@@ -1,7 +1,5 @@
 #include "mainwindow.h"
 #include "settings.h"
-#include "../src/realtime.h"
-#include "../src/utils/aspectratiowidget.hpp"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QFileDialog>

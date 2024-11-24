@@ -1,5 +1,7 @@
 #pragma once
 
+#include "realtime.h"
+#include "./utils/aspectratiowidget.hpp"
 #include <QMainWindow>
 #include <QCheckBox>
 #include <QSlider>
@@ -16,5 +18,7 @@ public:
     void finish();
 
 private:
+    Realtime *realtime;
+    AspectRatioWidget *aspectRatioWidget;
 
 };
