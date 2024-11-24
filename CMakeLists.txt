@@ -27,21 +27,31 @@ include_directories(src)
 add_executable(${PROJECT_NAME}
     src/main.cpp
 
-    # .cpp
+    src/realtime.cpp
     src/mainwindow.cpp
     src/settings.cpp
-
     src/utils/scenefilereader.cpp
     src/utils/sceneparser.cpp
+    src/shapes/Cylinder.cpp
+    src/shapes/Cube.cpp
+    src/shapes/Cone.cpp
+    src/shapes/Sphere.cpp
+    src/shapes/Triangle.cpp
+    src/shapes/Tet.cpp
 
-    # .h
     src/mainwindow.h
+    src/realtime.h
     src/settings.h
-
     src/utils/scenedata.h
     src/utils/scenefilereader.h
     src/utils/sceneparser.h
     src/utils/shaderloader.h
+    src/utils/aspectratiowidget.hpp
+    src/shapes/Cylinder.h
+    src/shapes/Cube.h
+    src/shapes/Sphere.h
+    src/shapes/Triangle.h
+    src/shapes/Tet.h
 )
 
 # GLM: this creates its library and allows you to `#include "glm/..."`

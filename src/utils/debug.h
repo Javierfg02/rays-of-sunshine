@@ -2,8 +2,7 @@
 #include <GL/glew.h>
 #include <iostream>
 
-namespace Debug
-{
+namespace Debug {
 // Task 2: Add file name and line number parameters
 inline void glErrorCheck(const char* filename, int lineNum) {
     GLenum errorNumber = glGetError();
