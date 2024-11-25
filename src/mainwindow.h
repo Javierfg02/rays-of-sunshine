@@ -9,16 +9,14 @@
 #include <QDoubleSpinBox>
 #include <QPushButton>
 
-class MainWindow : public QWidget
-{
+class MainWindow : public QMainWindow {
     Q_OBJECT
-
 public:
+    explicit MainWindow(QWidget *parent = nullptr);
     void initialize();
     void finish();
 
 private:
     Realtime *realtime;
     AspectRatioWidget *aspectRatioWidget;
-
 };

@@ -1,4 +1,5 @@
 #include "realtime.h"
+#include "../src/utils/debug.h"
 
 #include <QCoreApplication>
 #include <QMouseEvent>
@@ -47,6 +48,7 @@ void Realtime::initializeGL() {
     GLenum err = glewInit();
     if (err != GLEW_OK) {
         std::cerr << "Error while initializing GL: " << glewGetErrorString(err) << std::endl;
+        exit(1);  // to prevent undefined behavior
     }
     std::cout << "Initialized GL: Version " << glewGetString(GLEW_VERSION) << std::endl;
 
@@ -58,10 +60,14 @@ void Realtime::initializeGL() {
     glViewport(0, 0, size().width() * m_devicePixelRatio, size().height() * m_devicePixelRatio);
 
     // Students: anything requiring OpenGL calls when the program starts should be done here
+    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 }
 
 void Realtime::paintGL() {
     // Students: anything requiring OpenGL calls every frame should be done here
+    // basic rendering color
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    Debug::glErrorCheck(); // After OpenGL calls
 }
 
 void Realtime::resizeGL(int w, int h) {
@@ -69,6 +75,7 @@ void Realtime::resizeGL(int w, int h) {
     glViewport(0, 0, size().width() * m_devicePixelRatio, size().height() * m_devicePixelRatio);
 
     // Students: anything requiring OpenGL calls when the program starts should be done here
+    update();
 }
 
 void Realtime::sceneChanged() {
