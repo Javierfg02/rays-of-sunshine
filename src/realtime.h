@@ -4,6 +4,9 @@
 #ifdef __APPLE__
 #define GL_SILENCE_DEPRECATION
 #endif
+
+#include "./utils/camera.h"
+
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 
@@ -49,4 +52,17 @@ private:
 
     // Device Correction Variables
     double m_devicePixelRatio;
+
+    // RenderData
+    RenderData m_renderData;
+
+    // Camera
+    Camera m_camera;
+
+    // Shader
+    GLuint m_shader;
+
+    // VBO/VAO
+    GLuint m_vbo;
+    GLuint m_vao;
 };

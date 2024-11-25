@@ -2,7 +2,7 @@
 
 #include <vector>
 #include <string>
-
+#include <GL/glew.h>
 #include <glm/glm.hpp>
 
 // Enum of the types of virtual lights that might be in the scene
@@ -166,4 +166,11 @@ struct SceneNode {
     std::vector<ScenePrimitive*> primitives;
     std::vector<SceneLight*> lights;
     std::vector<SceneNode*> children;
+};
+
+// Struct which stores VBO/VAO pair
+struct GLbuffers {
+    GLuint vbo; // stores int id of VBO
+    GLuint vao; // stores int id of VAO
+    int vertexCount;
 };

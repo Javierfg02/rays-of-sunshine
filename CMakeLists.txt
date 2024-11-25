@@ -61,6 +61,7 @@ add_subdirectory(glm)
 add_library(StaticGLEW STATIC glew/src/glew.c
     src/utils/debug.h
     src/utils/camera.h src/utils/camera.cpp
+    src/features/buildinggenerator.h src/features/buildinggenerator.cpp
     # src/utils/graphicsengine.h src/utils/graphicsengine.cpp
     # src/utils/debug.h
     # src/shapes/cone.h

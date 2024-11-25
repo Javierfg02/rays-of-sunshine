@@ -7,6 +7,7 @@
 #include <iostream>
 #include "settings.h"
 #include "./utils/sceneparser.h"
+#include "./utils/shaderloader.h"
 
 // ================== Project 5: Lights, Camera
 
@@ -60,13 +61,62 @@ void Realtime::initializeGL() {
     glViewport(0, 0, size().width() * m_devicePixelRatio, size().height() * m_devicePixelRatio);
 
     // Students: anything requiring OpenGL calls when the program starts should be done here
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClearColor(0.1f, 0.2f, 0.3f, 1.0f);
+
+    // Init shader programs - will have to do multiple after
+    this->m_shader = ShaderLoader::createShaderProgram(
+        ":/resources/shaders/default.vert",
+        ":/resources/shaders/default.frag"
+    );
+
+    // test shaders - temporarily handle GPU data transfer
+    // VBO
+    GLuint m_vbo;
+    glGenBuffers(1, &this->m_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, this->m_vbo);
+
+    std::vector<GLfloat> triangle_data = {
+        0.0f, 0.5f, 0.0f,  // vertex 1
+        1.0f, 0.0f, 0.0f, // color 1
+        -0.5f, -0.5f, 0.0f, // vertex 2
+        0.0f, 1.0f, 0.0f, // color 2
+        0.5f, -0.5f, 0.0f, // vertex 3
+        0.0f, 0.0f, 1.0f // color 3
+    };
+
+    // pass triangle data into vbo buffer
+    glBufferData(GL_ARRAY_BUFFER, triangle_data.size() * sizeof(GLfloat), triangle_data.data(), GL_STATIC_DRAW);
+
+    // VAO
+    GLuint m_vao;
+    glGenVertexArrays(1, &this->m_vao);
+    // Bind the VAO you created here
+    glBindVertexArray(this->m_vao);
+    glEnableVertexAttribArray(0); // position
+    glEnableVertexAttribArray(1); // color
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(GLfloat), reinterpret_cast<void*>(0));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(GLfloat), reinterpret_cast<void*>(3*sizeof(GLfloat)));
+
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    this->sceneChanged(); // hardcoded start
 }
 
 void Realtime::paintGL() {
     // Students: anything requiring OpenGL calls every frame should be done here
     // basic rendering color
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // TEMPORARY - testing shaders work
+    // bind the shader
+    glUseProgram(this->m_shader);
+    glBindVertexArray(this->m_vao);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glBindVertexArray(0);
+    glUseProgram(0);
+
     Debug::glErrorCheck(); // After OpenGL calls
 }
 
@@ -75,12 +125,19 @@ void Realtime::resizeGL(int w, int h) {
     glViewport(0, 0, size().width() * m_devicePixelRatio, size().height() * m_devicePixelRatio);
 
     // Students: anything requiring OpenGL calls when the program starts should be done here
+    m_camera.updateScreenSize(w * m_devicePixelRatio, h * m_devicePixelRatio);
+
     update();
 }
 
 void Realtime::sceneChanged() {
-    RenderData metaData;
-    SceneParser::parse(settings.sceneFilePath, metaData);
+    SceneParser::parse(settings.sceneFilePath, this->m_renderData);
+
+    // init camera only if scene is changed
+    this->m_camera = Camera(m_renderData.cameraData,
+                            size().width() * m_devicePixelRatio,
+                            size().height() * m_devicePixelRatio);
+
     update(); // asks for a PaintGL() call to occur
 }
 
