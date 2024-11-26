@@ -41,10 +41,6 @@ void MainWindow::initialize() {
     // Add button container to main layout
     mainLayout->addWidget(buttonContainer);
 
-    // Add button layout to main layout
-    mainLayout->addLayout(buttonLayout);
-    mainLayout->setAlignment(buttonLayout, Qt::AlignBottom);
-
     // Set widget properties
     aspectRatioWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     realtime->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 14.0.1, 2024-11-25T17:35:00. -->
+<!-- Written by QtCreator 14.0.1, 2024-11-26T11:16:04. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -406,7 +406,7 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">CMakeProjectManager.CMakeRunConfiguration.projects_realtime</value>
     <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">projects_realtime</value>
     <value type="bool" key="ProjectExplorer.RunConfiguration.Customized">true</value>
-    <value type="QString" key="RunConfiguration.Arguments">cube</value>
+    <value type="QString" key="RunConfiguration.Arguments">cube cube_test_2</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
     <value type="bool" key="RunConfiguration.UseLibrarySearchPath">true</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>

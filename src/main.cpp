@@ -27,9 +27,9 @@ int main(int argc, char *argv[]) {
     // if second argument is optionally supplied, interpret it as the output file name
     settings.inputFile = args.at(0).toStdString();
     if (args.size() >= 2) {
-        settings.outputFile = args.at(1).toStdString() + ".png";
+        settings.outputFile = args.at(1).toStdString();
     } else {
-        settings.outputFile = settings.inputFile + ".png";
+        settings.outputFile = settings.inputFile;
     }
 
     QSurfaceFormat fmt;
