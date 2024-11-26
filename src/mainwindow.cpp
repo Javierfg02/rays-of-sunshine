@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "settings.h"
+#include <QPushButton>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QFileDialog>
@@ -14,33 +15,38 @@ MainWindow::MainWindow(QWidget *parent)
 }
 
 void MainWindow::initialize() {
-    // Create main window and layout
     realtime = new Realtime;
     aspectRatioWidget = new AspectRatioWidget(this);
     aspectRatioWidget->setAspectWidget(realtime, 3.f/4.f);
 
     // Create main layout
-    QHBoxLayout *hLayout = new QHBoxLayout(); // horizontal alignment
-    QVBoxLayout *vLayout = new QVBoxLayout(); // vertical alignment
-    vLayout->setAlignment(Qt::AlignTop);
+    QHBoxLayout *hLayout = new QHBoxLayout();
 
-    // Add widgets to layout
-    hLayout->addWidget(aspectRatioWidget); // Changed from vLayout to hLayout
+    // Create save button
+    QPushButton *saveButton = new QPushButton("Save Image");
+    saveButton->setFixedWidth(100);  // Control button width
 
-    // Set the layout stretch factor
-    hLayout->setStretchFactor(aspectRatioWidget, 1);
+    // Add to layout
+    hLayout->addWidget(aspectRatioWidget, 1);
+    hLayout->addWidget(saveButton, 0, Qt::AlignBottom);  // Align bottom right
 
-    // Set size policy for widgets
+    // Set widget properties
     aspectRatioWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     realtime->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-
-    // Set minimum size
     this->setMinimumSize(640, 480);
 
-    // Set the layout for the main window
+    // Set central widget
     QWidget *widget = new QWidget();
     widget->setLayout(hLayout);
     this->setCentralWidget(widget);
+
+    connect(saveButton, &QPushButton::clicked, this, &MainWindow::onSaveImage);
+}
+
+void MainWindow::onSaveImage() {
+    std::string outputPath = std::string(PROJECT_PATH) + "/scenefiles/outputs/" + settings.inputFile + ".png";
+    realtime->saveViewportImage(outputPath);
+    std::cout << "Image saved to: " << outputPath << std::endl;
 }
 
 void MainWindow::finish() {

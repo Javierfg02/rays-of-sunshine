@@ -19,4 +19,7 @@ public:
 private:
     Realtime *realtime;
     AspectRatioWidget *aspectRatioWidget;
+
+private slots:
+    void onSaveImage();
 };

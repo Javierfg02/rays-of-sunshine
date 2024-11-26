@@ -20,6 +20,8 @@ find_package(Qt6 REQUIRED COMPONENTS OpenGL)
 find_package(Qt6 REQUIRED COMPONENTS OpenGLWidgets)
 find_package(Qt6 REQUIRED COMPONENTS Xml)
 
+add_definitions(-DPROJECT_PATH="${CMAKE_SOURCE_DIR}")
+
 # Allows you to include files from within those directories, without prefixing their filepaths
 include_directories(src)
 

@@ -13,6 +13,19 @@ int main(int argc, char *argv[]) {
     QCoreApplication::setOrganizationName("CS 1230");
     QCoreApplication::setApplicationVersion(QT_VERSION_STR);
 
+    // argument based parsing
+    QCommandLineParser parser;
+    parser.addPositionalArgument("input", "Input scene filename (e.g. cube)");
+    parser.process(a);
+
+    const QStringList args = parser.positionalArguments();
+    if (args.size() >= 1) {
+        settings.inputFile = args.at(0).toStdString();
+    } else {
+        std::cerr << "Usage: " << argv[0] << " <input file name>" << std::endl;
+        return 1;
+    }
+
     QSurfaceFormat fmt;
     fmt.setVersion(4, 1);
     fmt.setProfile(QSurfaceFormat::CoreProfile);

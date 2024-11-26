@@ -9,8 +9,7 @@ struct Settings {
     int shapeParameter2 = 1;
     float nearPlane = 1;
     float farPlane = 1;
-    std::string outputFile = "ambient_total.png"; // default filename
-    std::string inputFile = "ambient_total.json";
+    std::string inputFile = "cube";
 };
 
 
