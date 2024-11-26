@@ -1,5 +1,7 @@
 # Ray of Sunshine - Implementation Plan
 
+** This document is AI generated **
+
 ## Phase 1: Foundation Setup (First Week)
 ### 1. OpenGL Setup & Basic Scene
 - [x] Qt window and canvas setup (completed)
