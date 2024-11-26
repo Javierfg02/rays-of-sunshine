@@ -5,7 +5,7 @@
 ## Phase 1: Foundation Setup (First Week)
 ### 1. OpenGL Setup & Basic Scene
 - [x] Qt window and canvas setup (completed)
-- [ ] Basic vertex and fragment shaders
+- [x] Basic vertex and fragment shaders
 ```glsl
 // Basic vertex shader to test
 attribute vec3 position;
