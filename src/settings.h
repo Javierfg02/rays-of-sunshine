@@ -10,6 +10,7 @@ struct Settings {
     float nearPlane = 1;
     float farPlane = 1;
     std::string inputFile = "cube";
+    std::string outputFile = "cube";
 };
 
 

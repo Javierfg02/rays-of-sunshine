@@ -13,17 +13,23 @@ int main(int argc, char *argv[]) {
     QCoreApplication::setOrganizationName("CS 1230");
     QCoreApplication::setApplicationVersion(QT_VERSION_STR);
 
-    // argument based parsing
     QCommandLineParser parser;
     parser.addPositionalArgument("input", "Input scene filename (e.g. cube)");
+    parser.addPositionalArgument("output", "Output image filename (optional)", "[output]");
     parser.process(a);
 
     const QStringList args = parser.positionalArguments();
-    if (args.size() >= 1) {
-        settings.inputFile = args.at(0).toStdString();
-    } else {
-        std::cerr << "Usage: " << argv[0] << " <input file name>" << std::endl;
+    if (args.size() < 1) {
+        std::cerr << "Usage: " << argv[0] << " <input file name> [output file name]" << std::endl;
         return 1;
+    }
+
+    // if second argument is optionally supplied, interpret it as the output file name
+    settings.inputFile = args.at(0).toStdString();
+    if (args.size() >= 2) {
+        settings.outputFile = args.at(1).toStdString() + ".png";
+    } else {
+        settings.outputFile = settings.inputFile + ".png";
     }
 
     QSurfaceFormat fmt;

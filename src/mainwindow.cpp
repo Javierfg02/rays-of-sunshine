@@ -19,16 +19,31 @@ void MainWindow::initialize() {
     aspectRatioWidget = new AspectRatioWidget(this);
     aspectRatioWidget->setAspectWidget(realtime, 3.f/4.f);
 
-    // Create main layout
-    QHBoxLayout *hLayout = new QHBoxLayout();
+    // Create main vertical layout
+    QVBoxLayout *mainLayout = new QVBoxLayout();
+
+    // Add aspect ratio widget to fill most of the space
+    mainLayout->addWidget(aspectRatioWidget, 1);
+
+    // Create container widget for the button
+    QWidget *buttonContainer = new QWidget();
+    QHBoxLayout *buttonLayout = new QHBoxLayout(buttonContainer);
 
     // Create save button
     QPushButton *saveButton = new QPushButton("Save Image");
-    saveButton->setFixedWidth(100);  // Control button width
+    saveButton->setFixedWidth(100);
 
-    // Add to layout
-    hLayout->addWidget(aspectRatioWidget, 1);
-    hLayout->addWidget(saveButton, 0, Qt::AlignBottom);  // Align bottom right
+    // Center the button in the container
+    buttonLayout->addStretch();
+    buttonLayout->addWidget(saveButton);
+    buttonLayout->addStretch();
+
+    // Add button container to main layout
+    mainLayout->addWidget(buttonContainer);
+
+    // Add button layout to main layout
+    mainLayout->addLayout(buttonLayout);
+    mainLayout->setAlignment(buttonLayout, Qt::AlignBottom);
 
     // Set widget properties
     aspectRatioWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -37,14 +52,14 @@ void MainWindow::initialize() {
 
     // Set central widget
     QWidget *widget = new QWidget();
-    widget->setLayout(hLayout);
+    widget->setLayout(mainLayout);
     this->setCentralWidget(widget);
 
     connect(saveButton, &QPushButton::clicked, this, &MainWindow::onSaveImage);
 }
 
 void MainWindow::onSaveImage() {
-    std::string outputPath = std::string(PROJECT_PATH) + "/scenefiles/outputs/" + settings.inputFile + ".png";
+    std::string outputPath = std::string(PROJECT_PATH) + "/scenefiles/outputs/" + settings.outputFile + ".png";
     realtime->saveViewportImage(outputPath);
     std::cout << "Image saved to: " << outputPath << std::endl;
 }
