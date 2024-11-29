@@ -63,11 +63,8 @@ void Realtime::initializeGL() {
     // Students: anything requiring OpenGL calls when the program starts should be done here
     glClearColor(0.1f, 0.2f, 0.3f, 1.0f);
 
-    // Init shader programs - will have to do multiple after
-    this->m_shader = ShaderLoader::createShaderProgram(
-        ":/resources/shaders/default.vert",
-        ":/resources/shaders/default.frag"
-    );
+    // Init shader program manager
+    this->m_shaderManager.initializeShaders(); // creates map of shader enum -> OpenGL shader ID
 
     // test shaders - temporarily handle GPU data transfer
     // VBO
@@ -111,9 +108,11 @@ void Realtime::paintGL() {
 
     // TEMPORARY - testing shaders work
     // bind the shader
-    glUseProgram(this->m_shader);
+    this->m_shaderManager.useShader(ShaderManager::ShaderType::BUILDING);
     glBindVertexArray(this->m_vao);
     glDrawArrays(GL_TRIANGLES, 0, 3);
+
+    // unbind
     glBindVertexArray(0);
     glUseProgram(0);
 

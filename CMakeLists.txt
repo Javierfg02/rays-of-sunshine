@@ -64,6 +64,13 @@ add_library(StaticGLEW STATIC glew/src/glew.c
     src/utils/debug.h
     src/utils/camera.h src/utils/camera.cpp
     src/features/buildinggenerator.h src/features/buildinggenerator.cpp
+    src/utils/shadermanager.h
+    resources/shaders/building.vert
+    resources/shaders/building.frag
+    resources/shaders/default.frag
+    resources/shaders/default.vert
+    resources/shaders/dof.frag
+    resources/shaders/dof.vert
     # src/utils/graphicsengine.h src/utils/graphicsengine.cpp
     # src/utils/debug.h
     # src/shapes/cone.h
@@ -92,6 +99,10 @@ qt6_add_resources(${PROJECT_NAME} "Resources"
     FILES
         resources/shaders/default.frag
         resources/shaders/default.vert
+        resources/shaders/building.frag
+        resources/shaders/building.vert
+        resources/shaders/dof.frag
+        resources/shaders/dof.vert
 )
 
 # GLEW: this provides support for Windows (including 64-bit)

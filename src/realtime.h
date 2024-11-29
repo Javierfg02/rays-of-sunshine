@@ -6,6 +6,7 @@
 #endif
 
 #include "./utils/camera.h"
+#include "./utils/shadermanager.h"
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>
@@ -59,8 +60,8 @@ private:
     // Camera
     Camera m_camera;
 
-    // Shader
-    GLuint m_shader;
+    // Shader Manager
+    ShaderManager& m_shaderManager = ShaderManager::getInstance();
 
     // VBO/VAO
     GLuint m_vbo;
