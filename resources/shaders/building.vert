@@ -10,7 +10,7 @@ uniform mat4 viewMatrix;
 uniform mat4 projMatrix;
 
 void main() {
-    // gl_Position = projMatrix * viewMatrix * modelMatrix * vec4(position, 1.0);
-    gl_Position = vec4(position, 1.0);
+    gl_Position = projMatrix * viewMatrix * modelMatrix * vec4(position, 1.0);
+    //gl_Position = vec4(position, 1.0);
     col = color;
 }

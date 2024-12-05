@@ -16,7 +16,6 @@ public:
         setLayout(m_layout);
     }
 
-    // the widget we want to keep the ratio
     void setAspectWidget(QWidget* widget, const double ratio = 1.0) {
         m_aspect_widget = widget;
         m_layout->addWidget(widget);

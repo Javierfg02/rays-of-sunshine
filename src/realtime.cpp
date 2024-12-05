@@ -13,6 +13,8 @@
 
 Realtime::Realtime(QWidget *parent)
     : QOpenGLWidget(parent)
+
+
 {
     m_prev_mouse_pos = glm::vec2(size().width()/2, size().height()/2);
     setMouseTracking(true);
@@ -39,96 +41,114 @@ void Realtime::finish() {
 
 void Realtime::initializeGL() {
     m_devicePixelRatio = this->devicePixelRatio();
-
     m_timer = startTimer(1000/60);
     m_elapsedTimer.start();
 
-    // Initializing GL.
-    // GLEW (GL Extension Wrangler) provides access to OpenGL functions.
+    // Initialize GL
     glewExperimental = GL_TRUE;
     GLenum err = glewInit();
     if (err != GLEW_OK) {
         std::cerr << "Error while initializing GL: " << glewGetErrorString(err) << std::endl;
-        exit(1);  // to prevent undefined behavior
+        exit(1);
     }
-    std::cout << "Initialized GL: Version " << glewGetString(GLEW_VERSION) << std::endl;
 
-    // Allows OpenGL to draw objects appropriately on top of one another
+    // Set up OpenGL settings
     glEnable(GL_DEPTH_TEST);
-    // Tells OpenGL to only draw the front face
     glEnable(GL_CULL_FACE);
-    // Tells OpenGL how big the screen is
-    glViewport(0, 0, size().width() * m_devicePixelRatio, size().height() * m_devicePixelRatio);
-
-    // Students: anything requiring OpenGL calls when the program starts should be done here
     glClearColor(0.1f, 0.2f, 0.3f, 1.0f);
 
-    // Init shader program manager
-    this->m_shaderManager.initializeShaders(); // creates map of shader enum -> OpenGL shader ID
+    // Initialize shader manager
+    m_shaderManager.initializeShaders();
 
-    // test shaders - temporarily handle GPU data transfer
-    // VBO
-    GLuint m_vbo;
-    glGenBuffers(1, &this->m_vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, this->m_vbo);
+    // Create building data
+    m_building = new Building();
+    m_building->updateParams(5, 3, 1.0f, 2.0f, 2.0f);
+    std::vector<float> buildingData = m_building->generateShape();
+    m_vertexCount = buildingData.size() / 6;
 
-    std::vector<GLfloat> triangle_data = {
-        0.0f, 0.5f, 0.0f,  // vertex 1
-        1.0f, 0.0f, 0.0f, // color 1
-        -0.5f, -0.5f, 0.0f, // vertex 2
-        0.0f, 1.0f, 0.0f, // color 2
-        0.5f, -0.5f, 0.0f, // vertex 3
-        0.0f, 0.0f, 1.0f // color 3
-    };
+    // Create and set up buffers
+    glGenBuffers(1, &m_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+    glBufferData(GL_ARRAY_BUFFER, buildingData.size() * sizeof(float), buildingData.data(), GL_STATIC_DRAW);
 
-    // pass triangle data into vbo buffer
-    glBufferData(GL_ARRAY_BUFFER, triangle_data.size() * sizeof(GLfloat), triangle_data.data(), GL_STATIC_DRAW);
+    glGenVertexArrays(1, &m_vao);
+    glBindVertexArray(m_vao);
 
-    // VAO
-    GLuint m_vao;
-    glGenVertexArrays(1, &this->m_vao);
-    // Bind the VAO you created here
-    glBindVertexArray(this->m_vao);
     glEnableVertexAttribArray(0); // position
     glEnableVertexAttribArray(1); // color
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(GLfloat), reinterpret_cast<void*>(0));
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(GLfloat), reinterpret_cast<void*>(3*sizeof(GLfloat)));
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
 
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    this->sceneChanged(); // hardcoded start
+    // Initialize camera and create initial render data
+    m_aspect_ratio = static_cast<float>(width()) / static_cast<float>(height());
+
+    // Set up initial camera data
+    m_renderData.cameraData.pos = glm::vec4(0, 0, 10, 1);
+    m_renderData.cameraData.look = glm::vec4(0, 0, -1, 0);
+    m_renderData.cameraData.up = glm::vec4(0, 1, 0, 0);
+    m_renderData.cameraData.heightAngle = 45.0f * M_PI / 180.0f;
+
+    // Initialize matrices
+    m_camera = Camera(m_renderData.cameraData,
+                      size().width() * m_devicePixelRatio,
+                      size().height() * m_devicePixelRatio);
+
+    m_view = m_camera.getViewMatrix();
+    m_proj = getProjectionMatrix(0.1f, 100.0f);
+
+    // Create initial building shape with transformation
+    RenderShapeData buildingShape;
+    buildingShape.ctm = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -10.0f));
+    m_shapes.push_back(buildingShape);
 }
 
 void Realtime::paintGL() {
-    // Students: anything requiring OpenGL calls every frame should be done here
-    // basic rendering color
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // TEMPORARY - testing shaders work
-    // bind the shader
-    this->m_shaderManager.useShader(ShaderManager::ShaderType::BUILDING);
-    glBindVertexArray(this->m_vao);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    // Get and use the building shader
+    GLuint shader = m_shaderManager.getShader(ShaderManager::ShaderType::BUILDING);
+    glUseProgram(shader);
 
-    // unbind
+    // Set matrices
+    glm::mat4 model = m_shapes[0].ctm;
+    glUniformMatrix4fv(glGetUniformLocation(shader, "modelMatrix"), 1, GL_FALSE, &model[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(shader, "viewMatrix"), 1, GL_FALSE, &m_view[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(shader, "projMatrix"), 1, GL_FALSE, &m_proj[0][0]);
+
+    // Draw building
+    glBindVertexArray(m_vao);
+    glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
     glBindVertexArray(0);
     glUseProgram(0);
-
-    Debug::glErrorCheck(); // After OpenGL calls
 }
 
 void Realtime::resizeGL(int w, int h) {
-    // Tells OpenGL how big the screen is
     glViewport(0, 0, size().width() * m_devicePixelRatio, size().height() * m_devicePixelRatio);
-
-    // Students: anything requiring OpenGL calls when the program starts should be done here
-    m_camera.updateScreenSize(w * m_devicePixelRatio, h * m_devicePixelRatio);
-
-    update();
+    m_aspect_ratio = static_cast<float>(w) / static_cast<float>(h);
+    m_proj = getProjectionMatrix(0.1f, 100.0f);
 }
 
+glm::mat4 Realtime::getProjectionMatrix(float near, float far) {
+    // source is https://www.songho.ca/opengl/gl_projectionmatrix.html because lecture matrix did not work (see implementation above)
+
+    float thetaH = m_camera.getHeightAngle();
+
+    float scaleY = 1.0f / std::tan(thetaH / 2.0f);
+    float scaleX = scaleY / m_aspect_ratio;
+
+    glm::mat4 proj = glm::mat4(0.0f);
+
+    proj[0][0] = scaleX;
+    proj[1][1] = scaleY;
+    proj[2][2] = -(far + near) / (far - near);
+    proj[2][3] = -1.0f;
+    proj[3][2] = -(2.0f * far * near) / (far - near);
+
+    return proj;
+}
 void Realtime::sceneChanged() {
     SceneParser::parse(settings.sceneFilePath, this->m_renderData);
 
@@ -136,6 +156,8 @@ void Realtime::sceneChanged() {
     this->m_camera = Camera(m_renderData.cameraData,
                             size().width() * m_devicePixelRatio,
                             size().height() * m_devicePixelRatio);
+    m_proj = getProjectionMatrix(settings.nearPlane, settings.farPlane);
+    m_view = m_camera.getViewMatrix();
 
     update(); // asks for a PaintGL() call to occur
 }

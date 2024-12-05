@@ -54,6 +54,8 @@ add_executable(${PROJECT_NAME}
     src/shapes/Sphere.h
     src/shapes/Triangle.h
     src/shapes/Tet.h
+    src/utils/camera.h src/utils/camera.cpp
+    src/shapes/building.h src/shapes/building.cpp
 )
 
 # GLM: this creates its library and allows you to `#include "glm/..."`
@@ -62,7 +64,7 @@ add_subdirectory(glm)
 # GLEW: this creates its library and allows you to `#include "GL/glew.h"`
 add_library(StaticGLEW STATIC glew/src/glew.c
     src/utils/debug.h
-    src/utils/camera.h src/utils/camera.cpp
+
     src/features/buildinggenerator.h src/features/buildinggenerator.cpp
     src/utils/shadermanager.h
     resources/shaders/building.vert
@@ -71,6 +73,7 @@ add_library(StaticGLEW STATIC glew/src/glew.c
     resources/shaders/default.vert
     resources/shaders/dof.frag
     resources/shaders/dof.vert
+    src/utils/camera.h src/utils/camera.cpp
     # src/utils/graphicsengine.h src/utils/graphicsengine.cpp
     # src/utils/debug.h
     # src/shapes/cone.h
