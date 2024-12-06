@@ -313,5 +313,6 @@ private:
 
     Building* m_building;
     std::vector<RenderShapeData> m_shapes;
+    void rotateCamera(float deltaX, float deltaY);
 
 };

@@ -79,3 +79,81 @@ void Camera::updateScreenSize(int width, int height) {
 void Camera::updateCameraData(SceneCameraData cameraData) {
     this->m_cameraData = cameraData;
 }
+
+
+
+
+glm::mat3 Camera::rotationMatrix(const glm::vec3& axis, float angle) {
+    glm::vec3 normAxis = glm::normalize(axis);
+    float cosTheta = cos(angle);
+    float sinTheta = sin(angle);
+
+    return glm::mat3(
+        cosTheta + normAxis.x * normAxis.x * (1 - cosTheta),
+        normAxis.x * normAxis.y * (1 - cosTheta) - normAxis.z * sinTheta,
+        normAxis.x * normAxis.z * (1 - cosTheta) + normAxis.y * sinTheta,
+
+        normAxis.y * normAxis.x * (1 - cosTheta) + normAxis.z * sinTheta,
+        cosTheta + normAxis.y * normAxis.y * (1 - cosTheta),
+        normAxis.y * normAxis.z * (1 - cosTheta) - normAxis.x * sinTheta,
+
+        normAxis.z * normAxis.x * (1 - cosTheta) - normAxis.y * sinTheta,
+        normAxis.z * normAxis.y * (1 - cosTheta) + normAxis.x * sinTheta,
+        cosTheta + normAxis.z * normAxis.z * (1 - cosTheta)
+        );
+}
+
+
+
+// float Camera::getAspectRatio() const {
+//     // Optional TODO: implement the getter or make your own design
+//     float focalLength = this->getFocalLength();
+//     float height = 2 * std::tan(getHeightAngle()) * focalLength;
+//     float width = 2 * std::tan(getAperture()) * focalLength;
+//     return width/height;
+
+// }
+
+void Camera::setPos(const glm::vec4& newPos) {
+    m_cameraData.pos = newPos;
+}
+
+void Camera::setLook(const glm::vec4& newLook) {
+    m_cameraData.look = newLook;
+}
+
+void Camera::setUp(const glm::vec4& newUp) {
+    m_cameraData.up = newUp;
+}
+
+glm::vec4 Camera::getLook() const {
+    return m_cameraData.look;
+}
+
+glm::vec4 Camera::getUp() const {
+    return m_cameraData.up;
+}
+
+glm::vec4 Camera::getPos() const {
+    return m_cameraData.pos;
+}
+
+float Camera::getHeightAngle() const {
+    // Optional TODO: implement the getter or make your own design
+    return this->renderData.cameraData.heightAngle;
+}
+
+float Camera::getFocalLength() const {
+    // Optional TODO: implement the getter or make your own design
+
+    return (this->renderData.cameraData.focalLength != 0) ? this->renderData.cameraData.focalLength : 1.0f;
+}
+
+float Camera::getAperture() const {
+    // Optional TODO: implement the getter or make your own design
+    return this->renderData.cameraData.aperture;
+}
+
+
+
+

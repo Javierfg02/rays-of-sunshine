@@ -52,21 +52,20 @@ void Realtime::initializeGL() {
         exit(1);
     }
 
-    // Set up OpenGL settings
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glClearColor(0.1f, 0.2f, 0.3f, 1.0f);
 
-    // Initialize shader manager
+    // shader manager
     m_shaderManager.initializeShaders();
 
-    // Create building data
+    // building data
     m_building = new Building();
     m_building->updateParams(5, 3, 1.0f, 2.0f, 2.0f);
     std::vector<float> buildingData = m_building->generateShape();
     m_vertexCount = buildingData.size() / 6;
 
-    // Create and set up buffers
+    // vao and vbo
     glGenBuffers(1, &m_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
     glBufferData(GL_ARRAY_BUFFER, buildingData.size() * sizeof(float), buildingData.data(), GL_STATIC_DRAW);
@@ -82,24 +81,24 @@ void Realtime::initializeGL() {
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    // Initialize camera and create initial render data
+
     m_aspect_ratio = static_cast<float>(width()) / static_cast<float>(height());
 
-    // Set up initial camera data
+    // camera data
     m_renderData.cameraData.pos = glm::vec4(0, 0, 10, 1);
     m_renderData.cameraData.look = glm::vec4(0, 0, -1, 0);
     m_renderData.cameraData.up = glm::vec4(0, 1, 0, 0);
     m_renderData.cameraData.heightAngle = 45.0f * M_PI / 180.0f;
 
-    // Initialize matrices
+    // transformation matrices
     m_camera = Camera(m_renderData.cameraData,
                       size().width() * m_devicePixelRatio,
                       size().height() * m_devicePixelRatio);
 
     m_view = m_camera.getViewMatrix();
-    m_proj = getProjectionMatrix(0.1f, 100.0f);
+    m_proj = getProjectionMatrix(50.0f, 100.0f);
 
-    // Create initial building shape with transformation
+    // add initial building to list of shapes
     RenderShapeData buildingShape;
     buildingShape.ctm = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -10.0f));
     m_shapes.push_back(buildingShape);
@@ -108,17 +107,17 @@ void Realtime::initializeGL() {
 void Realtime::paintGL() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // Get and use the building shader
     GLuint shader = m_shaderManager.getShader(ShaderManager::ShaderType::BUILDING);
     glUseProgram(shader);
 
-    // Set matrices
+    // send matrices to shader
     glm::mat4 model = m_shapes[0].ctm;
     glUniformMatrix4fv(glGetUniformLocation(shader, "modelMatrix"), 1, GL_FALSE, &model[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(shader, "viewMatrix"), 1, GL_FALSE, &m_view[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(shader, "projMatrix"), 1, GL_FALSE, &m_proj[0][0]);
 
-    // Draw building
+    // draw building
+
     glBindVertexArray(m_vao);
     glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
     glBindVertexArray(0);
@@ -167,6 +166,7 @@ void Realtime::settingsChanged() {
     update(); // asks for a PaintGL() call to occur
 }
 
+
 // ================== Project 6: Action!
 
 void Realtime::keyPressEvent(QKeyEvent *event) {
@@ -199,19 +199,111 @@ void Realtime::mouseMoveEvent(QMouseEvent *event) {
         m_prev_mouse_pos = glm::vec2(posX, posY);
 
         // Use deltaX and deltaY here to rotate
+        rotateCamera(deltaX, deltaY);
 
         update(); // asks for a PaintGL() call to occur
     }
 }
 
+
+void Realtime::rotateCamera(float deltaX, float deltaY) {
+    const float rotationSpeed = 0.002f;
+
+    glm::vec3 look = glm::vec3(m_camera.getLook());
+    glm::vec3 up = glm::vec3(m_camera.getUp());
+    std::cout << "camera look before: " << look[0] << look[1] << look[2] << std::endl;
+
+    // x rotation around world up vector
+    if (deltaX != 0) {
+        glm::vec3 worldSpaceVector = glm::vec3(0, 1, 0);
+        glm::mat3 xRotation = m_camera.rotationMatrix(worldSpaceVector, deltaX * rotationSpeed);
+        std::cout << "x rotation" << xRotation[0][0] << std::endl;
+        look = xRotation * look;
+        up = xRotation * up;
+    }
+
+    // y rotation around right vector
+    if (deltaY != 0) {
+        glm::vec3 right = glm::normalize(glm::cross(look, up));
+        glm::mat3 yRotation = m_camera.rotationMatrix(right, deltaY * rotationSpeed);
+        std::cout << "y rotation" << yRotation[0][0] << std::endl;
+        look = yRotation * look;
+        up = yRotation * up;
+    }
+
+    std::cout << "camera look before: " << m_camera.getLook()[0] << m_camera.getLook()[1] << m_camera.getLook()[2] << std::endl;
+    m_camera.setLook(glm::vec4(look, 0.0f));
+    std::cout << "look after: " << look[0] << look[1] << look[2] << std::endl;
+    std::cout << "camera look after: " << m_camera.getLook()[0] << m_camera.getLook()[1] << m_camera.getLook()[2] << std::endl;
+    std::cout << "up before: " << m_camera.getUp()[0] << m_camera.getUp()[1] << m_camera.getUp()[2] << std::endl;
+    m_camera.setUp(glm::vec4(up, 0.0f));
+    std::cout << "up after: " << m_camera.getUp()[0] << m_camera.getUp()[1] << m_camera.getUp()[2] << std::endl;
+    m_view = m_camera.getViewMatrix();
+}
+
+
 void Realtime::timerEvent(QTimerEvent *event) {
-    int elapsedms   = m_elapsedTimer.elapsed();
+    int elapsedms = m_elapsedTimer.elapsed();
     float deltaTime = elapsedms * 0.001f;
     m_elapsedTimer.restart();
 
+    glm::vec4 pos = m_camera.getPos();
+    glm::vec3 look = - m_camera.getLook();
+    glm::vec3 up = m_camera.getUp();
+
+    glm::vec3 lookVector = glm::normalize(-look);
+    glm::vec3 rightVector = glm::cross(glm::normalize(look), glm::normalize(up));
+
+
     // Use deltaTime and m_keyMap here to move around
 
-    update(); // asks for a PaintGL() call to occur
+    glm::vec3 shift = glm::vec3(0.0f);
+    const float moveSpeed = 5.0f;
+    float moveAmount = moveSpeed * deltaTime;
+
+    // W: Translates the camera in the direction of the look vector
+    if (m_keyMap[Qt::Key_W]) {
+        std:: cout << "w key pressed" << std::endl;
+        std::cout << "pos vector" << pos[0] << pos[1] << pos[2] << std::endl;
+        std::cout << "look vector" << look[0]
+                  << look[1] << look[2] << std::endl;
+        std::cout << "moveAmount" << moveAmount << std::endl;
+        shift += lookVector * moveAmount;
+        std::cout << "shift" << shift[0] << shift[1] << shift[2] << std::endl;
+    }
+
+    // S: Translates the camera in the opposite direction of the look vector
+    if (m_keyMap[Qt::Key_S]) {
+        shift -= lookVector * moveAmount;
+    }
+
+    // A: Translates the camera in the left direction, perpendicular to the look and up vectors
+    if (m_keyMap[Qt::Key_A]) {
+        shift += rightVector * moveAmount;
+    }
+
+    // D: Translates the camera in the right direction, also perpendicular to the look and up vectors. This movement should be opposite to that of pressing A
+    if (m_keyMap[Qt::Key_D]) {
+        shift -= rightVector * moveAmount;
+    }
+
+    // Space: Translates the camera along the world space vector (0, 1, 0)
+    if (m_keyMap[Qt::Key_Space]) {
+        shift += glm::vec3(0, 1, 0) * moveAmount;
+    }
+
+    // Ctrl: Translates the camera along the world space vector (0, -1, 0)
+    if (m_keyMap[Qt::Key_Control]) {
+        shift -= glm::vec3(0, 1, 0) * moveAmount;
+    }
+
+    if (glm::length(shift) > 0) {
+        std::cout << "pos vector before" << pos[0] << pos[1] << pos[2] << std::endl;
+        m_camera.setPos(pos + glm::vec4(shift, 0.0f));
+
+        m_view = m_camera.getViewMatrix();
+        update();
+    }
 }
 
 // DO NOT EDIT
