@@ -9,8 +9,7 @@ public:
     Building() = default;
 
     // Update building parameters
-    void updateParams(int numFloors, int windowsPerFloor, float floorHeight,
-                      float buildingWidth, float buildingDepth);
+    void updateParams();
 
     // Generate vertex data for the building
     std::vector<float> generateShape();

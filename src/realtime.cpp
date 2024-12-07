@@ -54,21 +54,55 @@ void Realtime::initializeGL() {
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
-    glClearColor(0.1f, 0.2f, 0.3f, 1.0f);
+    glClearColor(settings.backgroundColor[0], settings.backgroundColor[1], settings.backgroundColor[2], settings.backgroundColor[3]);
 
     // shader manager
     m_shaderManager.initializeShaders();
 
     // building data
-    m_building = new Building();
-    m_building->updateParams(5, 3, 1.0f, 2.0f, 2.0f);
-    std::vector<float> buildingData = m_building->generateShape();
-    m_vertexCount = buildingData.size() / 6;
+    std::vector<float> allBuildingData; // building vertex data
+    const int numBuildings = 20;
 
-    // vao and vbo
+    for (int i = 0; i < numBuildings; i++) {
+        Building* building = new Building();
+        building->updateParams(); // generates pseudorandomized building
+        std::vector<float> buildingData = building->generateShape();
+
+        // position buildings in a curve // Why are we doing this? - remove
+        float angle = (i / static_cast<float>(numBuildings)) * glm::pi<float>();
+        float radius = 20.0f;
+
+        // position the buildings
+        glm::vec3 position(
+            radius * cos(angle),
+            0,
+            radius * sin(angle) - 10.0f
+        );
+
+        // get position from vertices
+        for (size_t j = 0; j < buildingData.size(); j += 6) {
+            glm::vec4 pos(buildingData[j], buildingData[j+1], buildingData[j+2], 1.0f);
+            glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
+            pos = transform * pos;
+
+            // add posoition and color
+            allBuildingData.push_back(pos.x);
+            allBuildingData.push_back(pos.y);
+            allBuildingData.push_back(pos.z);
+            allBuildingData.push_back(buildingData[j+3]);
+            allBuildingData.push_back(buildingData[j+4]);
+            allBuildingData.push_back(buildingData[j+5]);
+        }
+
+        delete building;
+    }
+
+    m_vertexCount = allBuildingData.size() / 6;
+
+    // vao and vbo setup
     glGenBuffers(1, &m_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-    glBufferData(GL_ARRAY_BUFFER, buildingData.size() * sizeof(float), buildingData.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, allBuildingData.size() * sizeof(float), allBuildingData.data(), GL_STATIC_DRAW);
 
     glGenVertexArrays(1, &m_vao);
     glBindVertexArray(m_vao);
@@ -81,11 +115,10 @@ void Realtime::initializeGL() {
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-
     m_aspect_ratio = static_cast<float>(width()) / static_cast<float>(height());
 
     // camera data
-    m_renderData.cameraData.pos = glm::vec4(0, 0, 10, 1);
+    m_renderData.cameraData.pos = glm::vec4(0, 10, 30, 1);  // Moved back and up to see all buildings
     m_renderData.cameraData.look = glm::vec4(0, 0, -1, 0);
     m_renderData.cameraData.up = glm::vec4(0, 1, 0, 0);
     m_renderData.cameraData.heightAngle = 45.0f * M_PI / 180.0f;
@@ -96,17 +129,18 @@ void Realtime::initializeGL() {
                       size().height() * m_devicePixelRatio);
 
     m_view = m_camera.getViewMatrix();
-    m_proj = getProjectionMatrix(50.0f, 100.0f);
+    m_proj = getProjectionMatrix(0.1f, 100.0f);
 
-    // add initial building to list of shapes
+    // Since we've baked the transforms into the vertices, we only need an identity matrix
     RenderShapeData buildingShape;
-    buildingShape.ctm = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -10.0f));
+    buildingShape.ctm = glm::mat4(1.0f);
     m_shapes.push_back(buildingShape);
 }
 
 void Realtime::paintGL() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    // use the building shader
     GLuint shader = m_shaderManager.getShader(ShaderManager::ShaderType::BUILDING);
     glUseProgram(shader);
 
@@ -117,7 +151,6 @@ void Realtime::paintGL() {
     glUniformMatrix4fv(glGetUniformLocation(shader, "projMatrix"), 1, GL_FALSE, &m_proj[0][0]);
 
     // draw building
-
     glBindVertexArray(m_vao);
     glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
     glBindVertexArray(0);

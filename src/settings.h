@@ -1,9 +1,11 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
+#include <glm/glm.hpp>
 #include <string>
 
 struct Settings {
+    // metadata
     std::string sceneFilePath;
     int shapeParameter1 = 1;
     int shapeParameter2 = 1;
@@ -11,6 +13,15 @@ struct Settings {
     float farPlane = 1;
     std::string inputFile = "cube";
     std::string outputFile = "cube";
+
+    // scene data
+    glm::vec4 backgroundColor = glm::vec4(0.1f, 0.2f, 0.3f, 1.0f);
+
+    // building
+    float windowWidth = 0.2f;
+    float windowHeight = 0.3f;
+    glm::vec3 windowColor = glm::vec3(255.f/255.f, 197.f/255.f, 143.f/255.f);
+    glm::vec3 wallColor = glm::vec3(0.8f, 0.8f, 0.8f);
 };
 
 

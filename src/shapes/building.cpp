@@ -1,28 +1,30 @@
 #include "building.h"
 #include <iostream>
+#include "../settings.h"
 
-void Building::updateParams(int numFloors, int windowsPerFloor, float floorHeight,
-                            float buildingWidth, float buildingDepth) {
+void Building::updateParams() {
+    // random building parameters
+    int numFloors = 3 + arc4random() % 8;  // 3 to 10 floors
+    int windowsPerFloor = 2 + arc4random() % 3;  // 2 to 4 windows
+    float floorHeight = 0.8f + (arc4random() % 100) / 100.0f * 0.8f;
+    float buildingWidth = 1.0f + (arc4random() % 100) / 100.0f;
+    float buildingDepth = 1.0f + (arc4random() % 100) / 100.0f;
     m_numFloors = numFloors;
     m_windowsPerFloor = windowsPerFloor;
     m_floorHeight = floorHeight;
     m_buildingWidth = buildingWidth;
     m_buildingDepth = buildingDepth;
+
+    // TODO: add a randomized (or pseudo randomized) texture to each building - that is how we will make them look more real
+
+    // generate the building
     setVertexData();
 }
 
 std::vector<float> Building::generateShape() {
-    std::cout << "Vertex data size: " << m_vertexData.size() << std::endl;
-    for(size_t i = 0; i < std::min(size_t(18), m_vertexData.size()); i += 6) {
-        std::cout << "Vertex: (" << m_vertexData[i] << ", "
-                  << m_vertexData[i+1] << ", "
-                  << m_vertexData[i+2] << ") Color: ("
-                  << m_vertexData[i+3] << ", "
-                  << m_vertexData[i+4] << ", "
-                  << m_vertexData[i+5] << ")\n";
-    }
     return m_vertexData;
 }
+
 void Building::insertVec3WithColor(std::vector<float> &data, glm::vec3 pos, glm::vec3 color) {
     // position
     data.push_back(pos.x);
@@ -84,7 +86,7 @@ void Building::setVertexData() {
 
 void Building::makeFace(glm::vec3 topLeft, glm::vec3 topRight,
                         glm::vec3 bottomLeft, glm::vec3 bottomRight) {
-    glm::vec3 wallColor(0.8f, 0.8f, 0.8f);  // Light gray for walls
+    glm::vec3 wallColor = settings.wallColor; // Light gray for walls
 
     // Draw face using consistent counter-clockwise winding order
     // First triangle
@@ -100,9 +102,9 @@ void Building::makeFace(glm::vec3 topLeft, glm::vec3 topRight,
 
 
 void Building::addWindows() {
-    float windowWidth = 0.2f;
-    float windowHeight = 0.3f;
-    glm::vec3 windowColor(0.4f, 0.6f, 1.0f);  // Blue-tinted windows
+    float windowWidth = settings.windowWidth;
+    float windowHeight = settings.windowHeight;
+    glm::vec3 windowColor = settings.windowColor;
 
     // Space windows evenly across the front face
     float spacing = m_buildingWidth / (m_windowsPerFloor + 1);
@@ -135,7 +137,7 @@ void Building::addWindows() {
             glm::vec3 backBottomLeft(windowX - windowWidth/2, windowY, -m_buildingDepth/2 - 0.01f);
             glm::vec3 backBottomRight(windowX + windowWidth/2, windowY, -m_buildingDepth/2 - 0.01f);
 
-            // Add window vertices with color (back face)
+
             insertVec3WithColor(m_vertexData, backTopRight, windowColor);
             insertVec3WithColor(m_vertexData, backBottomRight, windowColor);
             insertVec3WithColor(m_vertexData, backTopLeft, windowColor);
