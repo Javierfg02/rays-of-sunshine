@@ -17,6 +17,9 @@ struct Settings {
     // scene data
     glm::vec4 backgroundColor = glm::vec4(0.1f, 0.2f, 0.3f, 1.0f);
 
+    // buildings
+    int numBuildings = 20;
+
     // building
     float windowWidth = 0.2f;
     float windowHeight = 0.3f;

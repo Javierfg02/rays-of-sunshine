@@ -8,6 +8,7 @@
 #include "settings.h"
 #include "./utils/sceneparser.h"
 #include "./utils/shaderloader.h"
+#include "./features/buildinggenerator.h"
 
 // ================== Project 5: Lights, Camera
 
@@ -59,43 +60,11 @@ void Realtime::initializeGL() {
     // shader manager
     m_shaderManager.initializeShaders();
 
-    // building data
+    // generate buildings
     std::vector<float> allBuildingData; // building vertex data
-    const int numBuildings = 20;
-
-    for (int i = 0; i < numBuildings; i++) {
-        Building* building = new Building();
-        building->updateParams(); // generates pseudorandomized building
-        std::vector<float> buildingData = building->generateShape();
-
-        // position buildings in a curve // Why are we doing this? - remove
-        float angle = (i / static_cast<float>(numBuildings)) * glm::pi<float>();
-        float radius = 20.0f;
-
-        // position the buildings
-        glm::vec3 position(
-            radius * cos(angle),
-            0,
-            radius * sin(angle) - 10.0f
-        );
-
-        // get position from vertices
-        for (size_t j = 0; j < buildingData.size(); j += 6) {
-            glm::vec4 pos(buildingData[j], buildingData[j+1], buildingData[j+2], 1.0f);
-            glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
-            pos = transform * pos;
-
-            // add posoition and color
-            allBuildingData.push_back(pos.x);
-            allBuildingData.push_back(pos.y);
-            allBuildingData.push_back(pos.z);
-            allBuildingData.push_back(buildingData[j+3]);
-            allBuildingData.push_back(buildingData[j+4]);
-            allBuildingData.push_back(buildingData[j+5]);
-        }
-
-        delete building;
-    }
+    BuildingGenerator* buildingGenerator = new BuildingGenerator();
+    buildingGenerator->generateBuildings();
+    allBuildingData = buildingGenerator->generateBuildings();
 
     m_vertexCount = allBuildingData.size() / 6;
 
@@ -151,7 +120,7 @@ void Realtime::paintGL() {
     glUniformMatrix4fv(glGetUniformLocation(shader, "projMatrix"), 1, GL_FALSE, &m_proj[0][0]);
 
     // draw building
-    glBindVertexArray(m_vao);
+    glBindVertexArray(m_vao); // vao will keep a reference to the vbo, so only need to bind vao
     glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
     glBindVertexArray(0);
     glUseProgram(0);
