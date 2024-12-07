@@ -104,7 +104,6 @@ glm::mat3 Camera::rotationMatrix(const glm::vec3& axis, float angle) {
 }
 
 
-
 // float Camera::getAspectRatio() const {
 //     // Optional TODO: implement the getter or make your own design
 //     float focalLength = this->getFocalLength();

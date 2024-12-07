@@ -211,13 +211,11 @@ void Realtime::rotateCamera(float deltaX, float deltaY) {
 
     glm::vec3 look = glm::vec3(m_camera.getLook());
     glm::vec3 up = glm::vec3(m_camera.getUp());
-    std::cout << "camera look before: " << look[0] << look[1] << look[2] << std::endl;
 
     // x rotation around world up vector
     if (deltaX != 0) {
         glm::vec3 worldSpaceVector = glm::vec3(0, 1, 0);
         glm::mat3 xRotation = m_camera.rotationMatrix(worldSpaceVector, deltaX * rotationSpeed);
-        std::cout << "x rotation" << xRotation[0][0] << std::endl;
         look = xRotation * look;
         up = xRotation * up;
     }
@@ -226,18 +224,12 @@ void Realtime::rotateCamera(float deltaX, float deltaY) {
     if (deltaY != 0) {
         glm::vec3 right = glm::normalize(glm::cross(look, up));
         glm::mat3 yRotation = m_camera.rotationMatrix(right, deltaY * rotationSpeed);
-        std::cout << "y rotation" << yRotation[0][0] << std::endl;
         look = yRotation * look;
         up = yRotation * up;
     }
 
-    std::cout << "camera look before: " << m_camera.getLook()[0] << m_camera.getLook()[1] << m_camera.getLook()[2] << std::endl;
     m_camera.setLook(glm::vec4(look, 0.0f));
-    std::cout << "look after: " << look[0] << look[1] << look[2] << std::endl;
-    std::cout << "camera look after: " << m_camera.getLook()[0] << m_camera.getLook()[1] << m_camera.getLook()[2] << std::endl;
-    std::cout << "up before: " << m_camera.getUp()[0] << m_camera.getUp()[1] << m_camera.getUp()[2] << std::endl;
     m_camera.setUp(glm::vec4(up, 0.0f));
-    std::cout << "up after: " << m_camera.getUp()[0] << m_camera.getUp()[1] << m_camera.getUp()[2] << std::endl;
     m_view = m_camera.getViewMatrix();
 }
 
@@ -263,13 +255,7 @@ void Realtime::timerEvent(QTimerEvent *event) {
 
     // W: Translates the camera in the direction of the look vector
     if (m_keyMap[Qt::Key_W]) {
-        std:: cout << "w key pressed" << std::endl;
-        std::cout << "pos vector" << pos[0] << pos[1] << pos[2] << std::endl;
-        std::cout << "look vector" << look[0]
-                  << look[1] << look[2] << std::endl;
-        std::cout << "moveAmount" << moveAmount << std::endl;
         shift += lookVector * moveAmount;
-        std::cout << "shift" << shift[0] << shift[1] << shift[2] << std::endl;
     }
 
     // S: Translates the camera in the opposite direction of the look vector
@@ -298,7 +284,6 @@ void Realtime::timerEvent(QTimerEvent *event) {
     }
 
     if (glm::length(shift) > 0) {
-        std::cout << "pos vector before" << pos[0] << pos[1] << pos[2] << std::endl;
         m_camera.setPos(pos + glm::vec4(shift, 0.0f));
 
         m_view = m_camera.getViewMatrix();
