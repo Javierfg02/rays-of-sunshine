@@ -135,7 +135,7 @@ void Building::addWindows() {
             glm::vec3 backBottomLeft(windowX - windowWidth/2, windowY, -m_buildingDepth/2 - 0.01f);
             glm::vec3 backBottomRight(windowX + windowWidth/2, windowY, -m_buildingDepth/2 - 0.01f);
 
-            // Add window vertices with color (back face)
+
             insertVec3WithColor(m_vertexData, backTopRight, windowColor);
             insertVec3WithColor(m_vertexData, backBottomRight, windowColor);
             insertVec3WithColor(m_vertexData, backTopLeft, windowColor);
