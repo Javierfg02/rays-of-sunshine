@@ -269,6 +269,9 @@ void Realtime::timerEvent(QTimerEvent *event) {
 
     // move forward (W)
     if (m_keyMap[Qt::Key_W]) {
+        if (currentPos.x >= 85.0f) {
+            currentPos.x = 84.9f;
+        }
         shift += glm::vec3(1.0f, 0.0f, 0.0f) * moveSpeed; // Fixed forward movement along X
     }
 

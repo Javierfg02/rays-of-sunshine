@@ -33,7 +33,6 @@ public:
 private:
     float citySize;
     std::vector<GridCell> m_grid;
-    std::vector<glm::vec3> m_roadPositions;
 };
 
 #endif // BUILDINGGENERATOR_H

@@ -53,16 +53,16 @@ std::vector<float> BuildingGenerator::initializeBuildings() {
 }
 
 void BuildingGenerator::generateGrid() {
-    // int maxWidth = 5.0f;
     int gridSize = this->citySize / settings.buildingMaxWidth;
 
     m_grid.clear();
 
     // determine which rows and columns are roads
+    int numRoads = 0;
     std::vector<bool> roadRows(gridSize, false);
     std::vector<bool> roadCols(gridSize, false);
 
-    // Make middle row always a road
+    // make middle row always a road -- camera starts here
     int middleRow = gridSize / 2;
     roadRows[middleRow] = true;
 
@@ -70,6 +70,7 @@ void BuildingGenerator::generateGrid() {
     for (int i = 0; i < gridSize; i++) {
         if (arc4random() % 7 == 0) { // 14% chance for each row to be a road
             roadRows[i] = true;
+            numRoads++;
         }
     }
 
@@ -77,6 +78,7 @@ void BuildingGenerator::generateGrid() {
     for (int j = 0; j < gridSize; j++) {
         if (arc4random() % 7 == 0) { // 14% chance for each column to be a road
             roadCols[j] = true;
+            numRoads++;
         }
     }
 
@@ -86,8 +88,8 @@ void BuildingGenerator::generateGrid() {
             cell.row = row;
             cell.col = col;
             cell.isRoad = roadRows[row] || roadCols[col];
-            cell.width = 5.0f;  // standard cell size = max building size
-            cell.height = 5.0f;
+            cell.width = settings.buildingMaxWidth;  // standard cell size = max building size
+            cell.height = settings.buildingMaxWidth;
 
             if (!cell.isRoad) {
                 // create a building for non-road cell
@@ -101,6 +103,7 @@ void BuildingGenerator::generateGrid() {
         }
     }
     std::cout << "grid rows " << m_grid.size() / 2 << std::endl;
+    std::cout << "num roads generated: " << numRoads << std::endl;
 }
 
 glm::vec3 BuildingGenerator::getRandomRoadPosition() {
