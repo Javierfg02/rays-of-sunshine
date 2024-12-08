@@ -199,10 +199,8 @@ void Realtime::mouseMoveEvent(QMouseEvent *event) {
         int deltaX = posX - m_prev_mouse_pos.x;
         int deltaY = posY - m_prev_mouse_pos.y;
         m_prev_mouse_pos = glm::vec2(posX, posY);
+
         // Use deltaX and deltaY here to rotate
-        float x = m_camera.getLook().x;
-        float y = m_camera.getLook().y;
-        float z = m_camera.getLook().z;
         rotateCamera(deltaX, deltaY);
 
         update(); // asks for a PaintGL() call to occur
@@ -237,10 +235,9 @@ void Realtime::rotateCamera(float deltaX, float deltaY) {
     if (deltaX != 0) {
         glm::vec3 worldUp(0, 1, 0);
         glm::mat3 yawRotation = m_camera.rotationMatrix(worldUp, glm::radians(yawAngle));
-        look = glm::normalize(yawRotation * glm::vec3(0.0f, look.y, -1.0f)); // Apply clamped yaw
+        look = glm::normalize(yawRotation * glm::vec3(0.0f, look.y, -1.0f));
         up = glm::normalize(yawRotation * up);
     }
-
 
     // update the camera with the adjusted vectors
     m_camera.setLook(glm::vec4(look, 0.0f));
@@ -277,6 +274,9 @@ void Realtime::timerEvent(QTimerEvent *event) {
 
     // move backward (S)
     if (m_keyMap[Qt::Key_S]) {
+        if (currentPos.x <= 0.0f) {
+            currentPos.x = 0.1f;
+        }
         shift -= glm::vec3(1.0f, 0.0f, 0.0f) * moveSpeed; // Fixed backward movement along X
     }
 
