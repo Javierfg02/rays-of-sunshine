@@ -99,7 +99,7 @@ void Realtime::initializeGL() {
                       size().height() * m_devicePixelRatio);
 
     m_view = m_camera.getViewMatrix();
-    m_proj = getProjectionMatrix(0.1f, 100.0f);  // much farther far plane to see more of the city
+    m_proj = m_camera.getProjectionMatrix();  // much farther far plane to see more of the city
 
     // Since we've baked the transforms into the vertices, we only need an identity matrix
     RenderShapeData buildingShape;
@@ -130,27 +130,10 @@ void Realtime::paintGL() {
 void Realtime::resizeGL(int w, int h) {
     glViewport(0, 0, size().width() * m_devicePixelRatio, size().height() * m_devicePixelRatio);
     m_aspect_ratio = static_cast<float>(w) / static_cast<float>(h);
-    m_proj = getProjectionMatrix(0.1f, 100.0f);
+    m_proj = m_camera.getProjectionMatrix();
 }
 
-glm::mat4 Realtime::getProjectionMatrix(float near, float far) {
-    // source is https://www.songho.ca/opengl/gl_projectionmatrix.html because lecture matrix did not work (see implementation above)
 
-    float thetaH = m_camera.getHeightAngle();
-
-    float scaleY = 1.0f / std::tan(thetaH / 2.0f);
-    float scaleX = scaleY / m_aspect_ratio;
-
-    glm::mat4 proj = glm::mat4(0.0f);
-
-    proj[0][0] = scaleX;
-    proj[1][1] = scaleY;
-    proj[2][2] = -(far + near) / (far - near);
-    proj[2][3] = -1.0f;
-    proj[3][2] = -(2.0f * far * near) / (far - near);
-
-    return proj;
-}
 void Realtime::sceneChanged() {
     SceneParser::parse(settings.sceneFilePath, this->m_renderData);
 
@@ -158,7 +141,7 @@ void Realtime::sceneChanged() {
     this->m_camera = Camera(m_renderData.cameraData,
                             size().width() * m_devicePixelRatio,
                             size().height() * m_devicePixelRatio);
-    m_proj = getProjectionMatrix(settings.nearPlane, settings.farPlane);
+    m_proj = m_camera.getProjectionMatrix();
     m_view = m_camera.getViewMatrix();
 
     update(); // asks for a PaintGL() call to occur
@@ -218,12 +201,12 @@ void Realtime::rotateCamera(float deltaX, float deltaY) {
     float nextYaw = yawAngle + deltaX * rotationSpeed * 90.0f;
 
     // Update pitch if within limits
-    if (nextPitch >= -40.0f && nextPitch <= 25.0f) {
+    if (nextPitch >= settings.cameraPitchMin && nextPitch <= settings.cameraPitchMax) {
         pitchAngle = nextPitch;
     }
 
     // Update yaw if within limits
-    if (nextYaw >= 30.0f && nextYaw <= 150.0f) {
+    if (nextYaw >= settings.cameraYawMin && nextYaw <= settings.cameraYawMax) {
         yawAngle = nextYaw;
     }
 
@@ -257,39 +240,46 @@ void Realtime::timerEvent(QTimerEvent *event) {
 
     glm::vec4 currentPos = m_camera.getPos();
 
-    // gravity: update vertical velocity and apply to position
-    m_verticalVelocity -= settings.gravity * deltaTime;
-    currentPos.y += m_verticalVelocity * deltaTime;
+    // // gravity: update vertical velocity and apply to position
+    // if (m_isJumping) {
+    //     m_verticalVelocity -= settings.gravity * deltaTime;
+    //     currentPos.y += m_verticalVelocity * deltaTime;
+    // }
 
-    // check for ground collision
-    if (currentPos.y <= settings.min_height) {
-        currentPos.y = settings.min_height;
-        m_verticalVelocity = 0.0f; // Reset vertical velocity on the ground
-    }
+    // // check for ground collision
+    // if (currentPos.y <= settings.min_height) {
+    //     currentPos.y = 0.0f;
+    //     m_verticalVelocity = 0.0f; // Reset vertical velocity on the ground
+    // }
 
     // movement adjustments
-    glm::vec3 shift = glm::vec3(0.0f);
     float moveSpeed = settings.moveSpeed * deltaTime;
 
     // move forward (W)
-    if (m_keyMap[Qt::Key_W]) {
-        if (currentPos.x >= 85.0f) {
-            currentPos.x = 84.9f;
-        }
-        shift += glm::vec3(1.0f, 0.0f, 0.0f) * moveSpeed; // Fixed forward movement along X
+    if (m_keyMap[Qt::Key_W] && currentPos.x <= 85.f) {
+        this->m_walkingTime += deltaTime;
+        this->t = this->m_walkingTime;
+        // apply bezier curve to camera motion (currently just sinusoidal)
+        currentPos.y = 1.25f * std::abs(std::cos(this->m_walkingTime * 4));
+        currentPos.x += moveSpeed;
+    } // move backward (S)
+    else if (m_keyMap[Qt::Key_S] && currentPos.x >= 0.1f) {
+        this->m_walkingTime += deltaTime;
+        this->t = this->m_walkingTime;
+        currentPos.y = 1.25f * std::abs(std::cos(this->m_walkingTime * 4));
+        currentPos.x -= moveSpeed;
+    } else {
+        this->m_walkingTime = this->t;
     }
 
-    // move backward (S)
-    if (m_keyMap[Qt::Key_S]) {
-        if (currentPos.x <= 0.0f) {
-            currentPos.x = 0.1f;
-        }
-        shift -= glm::vec3(1.0f, 0.0f, 0.0f) * moveSpeed; // Fixed backward movement along X
-    }
+    std::cout << "currentPos.y: " << currentPos.y << std::endl;
 
     // jump
     if (m_keyMap[Qt::Key_Space] && currentPos.y <= settings.min_height) {
+        m_isJumping = true;
         m_verticalVelocity = settings.jump_force; // Apply jump impulse
+    } else {
+        m_isJumping = false;
     }
 
     // spring
@@ -300,7 +290,6 @@ void Realtime::timerEvent(QTimerEvent *event) {
     }
 
     // update position and camera
-    currentPos += glm::vec4(shift, 0.0f);
     m_camera.setPos(currentPos);
     m_view = m_camera.getViewMatrix();
 

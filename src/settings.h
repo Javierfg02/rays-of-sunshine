@@ -10,7 +10,7 @@ struct Settings {
     int shapeParameter1 = 1;
     int shapeParameter2 = 1;
     float nearPlane = 1;
-    float farPlane = 1;
+    float farPlane = 100.f;
     std::string inputFile = "cube";
     std::string outputFile = "cube";
 
@@ -31,10 +31,21 @@ struct Settings {
     glm::vec3 wallColor = glm::vec3(0.4f, 0.4f, 0.4f);
 
     // gravity
-    float moveSpeed = 2.5f;
+    float moveSpeed = 1.5f;
     float gravity = 9.81;
     float min_height = 2.0f;
     float jump_force = 3.5f;
+
+    // camera
+    float cameraPitchMin = -25.0f;
+    float cameraPitchMax = 30.0f;
+    float cameraYawMin = 30.0f;
+    float cameraYawMax = 150.0f;
+
+    // bezier
+    float baseHeight = 2.0f;
+    float stepHeight = 0.5f;
+    float stopDuration = 1.0f;
 };
 
 

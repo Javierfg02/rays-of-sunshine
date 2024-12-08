@@ -5,10 +5,6 @@
 #define GL_SILENCE_DEPRECATION
 #endif
 
-#include "./utils/camera.h"
-#include "./utils/shadermanager.h"
-#include "shapes/building.h"
-
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 
@@ -17,6 +13,11 @@
 #include <QOpenGLWidget>
 #include <QTime>
 #include <QTimer>
+
+#include "./utils/camera.h"
+#include "./utils/shadermanager.h"
+#include "shapes/building.h"
+#include "./features/bezier.h"
 
 class Realtime : public QOpenGLWidget
 {
@@ -62,6 +63,15 @@ private:
 
     // Camera
     Camera m_camera;
+    float m_verticalVelocity = 0.0f;
+
+    // Bezier
+    Bezier m_walkCurve;
+    float m_walkingTime = 0.0f;
+    float m_stopTime = 0.0f;
+    bool m_isWalking = false;
+    bool m_isJumping = false;
+    float t = 0;
 
     // Shader Manager
     ShaderManager& m_shaderManager = ShaderManager::getInstance();
@@ -69,8 +79,6 @@ private:
     // VBO/VAO
     GLuint m_vbo;
     GLuint m_vao;
-
-    glm::mat4 getProjectionMatrix(float near, float far);
 
     // transforamtion matrices
     glm::mat4 m_model = glm::mat4(1);
@@ -83,6 +91,4 @@ private:
     std::vector<RenderShapeData> m_shapes;
     void rotateCamera(float deltaX, float deltaY);
 
-    // gravity
-    float m_verticalVelocity = 0.0f;
 };
