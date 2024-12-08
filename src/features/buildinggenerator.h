@@ -12,33 +12,29 @@ class BuildingGenerator {
 
 public:
 
-    BuildingGenerator();
+    BuildingGenerator(float citySize = 100.f);
     ~BuildingGenerator();
 
     struct GridCell {
+        int width;
+        int height;
         int row;
         int col;
         bool isRoad;
         Building* building; // building related to that cell (if any)
+        bool isInit = false;
     };
 
-    struct Grid {
-        std::vector<GridCell> grid; // 1D array of grids
-    };
-
-    std::vector<float> generateBuildings();
+    std::vector<float> initializeBuildings();
     void generateGrid();
-
     void renderBuildings();
-    void initializeBuildings();
     GLuint getShader();
 
 private:
+    float citySize;
     GLuint m_shader;
     GLbuffers buildingBuffers;
-    Grid m_grid;
-    std::vector<float> m_buildingData;
-
+    std::vector<GridCell> m_grid;
 };
 
 #endif // BUILDINGGENERATOR_H

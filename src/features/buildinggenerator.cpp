@@ -1,53 +1,100 @@
 #include <glm/glm.hpp>
 #include <glm/ext/scalar_constants.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <iostream>
 
 #include "buildinggenerator.h"
 #include "./shapes/building.h"
 #include "./settings.h"
 
-BuildingGenerator::BuildingGenerator() {
-    generateGrid();
+BuildingGenerator::BuildingGenerator(float citySize) {
+    this->citySize = citySize;
+    this->generateGrid();
 }
 
-std::vector<float> BuildingGenerator::generateBuildings() {
-    int numBuildings = settings.numBuildings;
+std::vector<float> BuildingGenerator::initializeBuildings() {
+    std::vector<float> vbo_data;
+    int numBuildings = 0;
 
-    for (int i = 0; i < numBuildings; i++) {
-        Building* building = new Building();
-        building->updateParams(); // generates pseudorandomized building
-        std::vector<float> buildingData = building->generateShape();
+    // Use reference to modify actual grid cells
+    for(int i = 0; i < m_grid.size(); i++) {
+        GridCell& cell = m_grid[i];
+        // if the cell is not a road cell and there is a building defined
+        if(!cell.isRoad && cell.building && !cell.isInit) {
+            numBuildings++;
+            cell.isInit = true;
+            std::vector<float> buildingData = cell.building->generateShape();
 
-        // position the buildings
-        float angle = (i / static_cast<float>(numBuildings)) * glm::pi<float>();
-        float radius = 20.0f;
+            // Calculate world position based on grid position
+            float xPos = cell.col * (settings.buildingMaxWidth);
+            float zPos = cell.row * (settings.buildingMaxWidth);
+            glm::vec3 position(xPos, 0.0f, zPos);
 
-        // position the buildings
-        glm::vec3 position(
-            radius * cos(angle),
-            0,
-            radius * sin(angle) - 10.0f
-            );
+            // apply position to all vertices of this building
+            for(int i = 0; i < buildingData.size(); i += 6) {
+                glm::vec4 pos(buildingData[i], buildingData[i+1], buildingData[i+2], 1.0f);
+                glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
+                pos = transform * pos;
 
-        // get position from vertices
-        for (size_t j = 0; j < buildingData.size(); j += 6) {
-            glm::vec4 pos(buildingData[j], buildingData[j+1], buildingData[j+2], 1.0f);
-            glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
-            pos = transform * pos;
+                // push vertex data
+                vbo_data.push_back(pos.x);
+                vbo_data.push_back(pos.y);
+                vbo_data.push_back(pos.z);
 
-            // add posoition and color
-            m_buildingData.push_back(pos.x);
-            m_buildingData.push_back(pos.y);
-            m_buildingData.push_back(pos.z);
-            m_buildingData.push_back(buildingData[j+3]);
-            m_buildingData.push_back(buildingData[j+4]);
-            m_buildingData.push_back(buildingData[j+5]);
+                // push color data
+                vbo_data.push_back(buildingData[i+3]);
+                vbo_data.push_back(buildingData[i+4]);
+                vbo_data.push_back(buildingData[i+5]);
+            }
         }
+    }
+    std::cout << "num buildings generated: " << numBuildings << std::endl;
+    return vbo_data;
+}
 
-        delete building;
+void BuildingGenerator::generateGrid() {
+    // int maxWidth = 5.0f;
+    int gridSize = this->citySize / settings.buildingMaxWidth;
+
+    m_grid.clear();
+
+    // determine which rows and columns are roads
+    std::vector<bool> roadRows(gridSize, false);
+    std::vector<bool> roadCols(gridSize, false);
+
+    // randomly select road rows
+    for (int i = 0; i < gridSize; i++) {
+        if (arc4random() % 7 == 0) { // 14% chance for each row to be a road
+            roadRows[i] = true;
+        }
     }
 
-    return m_buildingData;
-}
+    // randomly select road columns
+    for (int j = 0; j < gridSize; j++) {
+        if (arc4random() % 7 == 0) { // 14% chance for each column to be a road
+            roadCols[j] = true;
+        }
+    }
 
-void BuildingGenerator::generateGrid() {}
+    for (int row = 0; row < gridSize; row++) {
+        for (int col = 0; col < gridSize; col++) {
+            GridCell cell;
+            cell.row = row;
+            cell.col = col;
+            cell.isRoad = roadRows[row] || roadCols[col];
+            cell.width = 5.0f;  // standard cell size = max building size
+            cell.height = 5.0f;
+
+            if (!cell.isRoad) {
+                // create a building for non-road cell
+                cell.building = new Building();
+                cell.building->updateParams(); // randomize building params
+            } else {
+                cell.building = nullptr;
+            }
+
+            m_grid.push_back(cell);
+        }
+    }
+    std::cout << "grid rows " << m_grid.size() / 2 << std::endl;
+}

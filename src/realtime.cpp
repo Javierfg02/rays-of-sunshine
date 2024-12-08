@@ -63,9 +63,7 @@ void Realtime::initializeGL() {
     // generate buildings
     std::vector<float> allBuildingData; // building vertex data
     BuildingGenerator* buildingGenerator = new BuildingGenerator();
-    buildingGenerator->generateBuildings();
-    allBuildingData = buildingGenerator->generateBuildings();
-
+    allBuildingData = buildingGenerator->initializeBuildings();
     m_vertexCount = allBuildingData.size() / 6;
 
     // vao and vbo setup
@@ -87,8 +85,8 @@ void Realtime::initializeGL() {
     m_aspect_ratio = static_cast<float>(width()) / static_cast<float>(height());
 
     // camera data
-    m_renderData.cameraData.pos = glm::vec4(0, 10, 30, 1);  // Moved back and up to see all buildings
-    m_renderData.cameraData.look = glm::vec4(0, 0, -1, 0);
+    m_renderData.cameraData.pos = glm::vec4(50, 20, 80, 1);  // Position to see a good portion of the 100x100 city
+    m_renderData.cameraData.look = glm::vec4(0, -0.2, -1, 0);
     m_renderData.cameraData.up = glm::vec4(0, 1, 0, 0);
     m_renderData.cameraData.heightAngle = 45.0f * M_PI / 180.0f;
 
@@ -167,7 +165,6 @@ void Realtime::settingsChanged() {
 
     update(); // asks for a PaintGL() call to occur
 }
-
 
 // ================== Project 6: Action!
 
