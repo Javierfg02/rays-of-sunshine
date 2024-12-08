@@ -210,37 +210,40 @@ void Realtime::mouseMoveEvent(QMouseEvent *event) {
 
 void Realtime::rotateCamera(float deltaX, float deltaY) {
     const float rotationSpeed = 0.002f;
+    static float pitchAngle = 0.0f;
+    static float yawAngle = 90.0f;
 
-    // eetrieve the current look vector and up vector
-    glm::vec3 look = glm::vec3(m_camera.getLook());
-    glm::vec3 up = glm::vec3(m_camera.getUp());
+    // Calculate next angles
+    float nextPitch = pitchAngle - deltaY * rotationSpeed * 90.0f;
+    float nextYaw = yawAngle + deltaX * rotationSpeed * 90.0f;
 
-    // compute the current pitch (angle above/below horizontal)
-    glm::vec3 forwardXZ = glm::normalize(glm::vec3(look.x, 0.0f, look.z));
-    float currentPitch = glm::degrees(std::asin(glm::clamp(look.y, -1.0f, 1.0f)));
-
-    // clamp the pitch change
-    float newPitch = glm::clamp(currentPitch - deltaY * rotationSpeed * 90.0f, -20.0f, 30.0f);
-
-    // update the look vector with the clamped pitch
-    float pitchRad = glm::radians(newPitch);
-    look.y = std::sin(pitchRad);
-    look.x = forwardXZ.x * std::cos(pitchRad);
-    look.z = forwardXZ.z * std::cos(pitchRad);
-
-    static float yawAngle = 90.0f; // yaw angle in degrees
-    float deltaYaw = deltaX * rotationSpeed * 90.0f; // convert deltaX to yaw angle change
-    yawAngle = glm::clamp(yawAngle + deltaYaw, 0.0f, 180.0f); // clamp yaw to [-90, 90] degrees
-
-    if (deltaX != 0) {
-        glm::vec3 worldUp(0, 1, 0);
-        glm::mat3 yawRotation = m_camera.rotationMatrix(worldUp, glm::radians(yawAngle));
-        look = glm::normalize(yawRotation * glm::vec3(0.0f, look.y, -1.0f));
-        up = glm::normalize(yawRotation * up);
+    // Update pitch if within limits
+    if (nextPitch >= -40.0f && nextPitch <= 25.0f) {
+        pitchAngle = nextPitch;
     }
 
-    // update the camera with the adjusted vectors
-    m_camera.setLook(glm::vec4(look, 0.0f));
+    // Update yaw if within limits
+    if (nextYaw >= 30.0f && nextYaw <= 150.0f) {
+        yawAngle = nextYaw;
+    }
+
+    // Convert angles to radians for calculations
+    float pitchRad = glm::radians(pitchAngle);
+    float yawRad = glm::radians(yawAngle);
+
+    // Calculate look vector from angles
+    glm::vec3 look;
+    look.x = cos(pitchRad) * sin(yawRad);
+    look.y = sin(pitchRad);
+    look.z = cos(pitchRad) * -cos(yawRad);
+
+    // Calculate up vector
+    glm::vec3 worldUp(0, 1, 0);
+    glm::vec3 right = glm::normalize(glm::cross(look, worldUp));
+    glm::vec3 up = glm::normalize(glm::cross(right, look));
+
+    // Update camera
+    m_camera.setLook(glm::vec4(glm::normalize(look), 0.0f));
     m_camera.setUp(glm::vec4(up, 0.0f));
     m_view = m_camera.getViewMatrix();
 }
@@ -248,7 +251,8 @@ void Realtime::rotateCamera(float deltaX, float deltaY) {
 
 void Realtime::timerEvent(QTimerEvent *event) {
     int elapsedms = m_elapsedTimer.elapsed();
-    float deltaTime = elapsedms * 0.001f; // Convert milliseconds to seconds
+    float deltaTime = elapsedms * 0.001f; // convert milliseconds to seconds always 0.016s elapsed ~= 60fps
+    // std::cout << "deltaTime: " << deltaTime << std::endl;
     m_elapsedTimer.restart();
 
     glm::vec4 currentPos = m_camera.getPos();

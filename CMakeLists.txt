@@ -74,6 +74,7 @@ add_library(StaticGLEW STATIC glew/src/glew.c
     resources/shaders/dof.frag
     resources/shaders/dof.vert
     src/utils/camera.h src/utils/camera.cpp
+    src/features/bezier.h src/features/bezier.cpp
     # src/utils/graphicsengine.h src/utils/graphicsengine.cpp
     # src/utils/debug.h
     # src/shapes/cone.h
