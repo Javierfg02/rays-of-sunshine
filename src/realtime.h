@@ -78,8 +78,11 @@ private:
     glm::mat4 m_proj  = glm::mat4(1);
     glm::mat4 mvp_matrix;
 
+    // Shapes
     Building* m_building;
     std::vector<RenderShapeData> m_shapes;
     void rotateCamera(float deltaX, float deltaY);
 
+    // gravity
+    float m_verticalVelocity = 0.0f;
 };

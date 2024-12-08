@@ -199,8 +199,10 @@ void Realtime::mouseMoveEvent(QMouseEvent *event) {
         int deltaX = posX - m_prev_mouse_pos.x;
         int deltaY = posY - m_prev_mouse_pos.y;
         m_prev_mouse_pos = glm::vec2(posX, posY);
-
         // Use deltaX and deltaY here to rotate
+        float x = m_camera.getLook().x;
+        float y = m_camera.getLook().y;
+        float z = m_camera.getLook().z;
         rotateCamera(deltaX, deltaY);
 
         update(); // asks for a PaintGL() call to occur
@@ -211,25 +213,36 @@ void Realtime::mouseMoveEvent(QMouseEvent *event) {
 void Realtime::rotateCamera(float deltaX, float deltaY) {
     const float rotationSpeed = 0.002f;
 
+    // eetrieve the current look vector and up vector
     glm::vec3 look = glm::vec3(m_camera.getLook());
     glm::vec3 up = glm::vec3(m_camera.getUp());
 
-    // x rotation around world up vector
+    // compute the current pitch (angle above/below horizontal)
+    glm::vec3 forwardXZ = glm::normalize(glm::vec3(look.x, 0.0f, look.z));
+    float currentPitch = glm::degrees(std::asin(glm::clamp(look.y, -1.0f, 1.0f)));
+
+    // clamp the pitch change
+    float newPitch = glm::clamp(currentPitch - deltaY * rotationSpeed * 90.0f, -20.0f, 30.0f);
+
+    // update the look vector with the clamped pitch
+    float pitchRad = glm::radians(newPitch);
+    look.y = std::sin(pitchRad);
+    look.x = forwardXZ.x * std::cos(pitchRad);
+    look.z = forwardXZ.z * std::cos(pitchRad);
+
+    static float yawAngle = 90.0f; // yaw angle in degrees
+    float deltaYaw = deltaX * rotationSpeed * 90.0f; // convert deltaX to yaw angle change
+    yawAngle = glm::clamp(yawAngle + deltaYaw, 0.0f, 180.0f); // clamp yaw to [-90, 90] degrees
+
     if (deltaX != 0) {
-        glm::vec3 worldSpaceVector = glm::vec3(0, 1, 0);
-        glm::mat3 xRotation = m_camera.rotationMatrix(worldSpaceVector, deltaX * rotationSpeed);
-        look = xRotation * look;
-        up = xRotation * up;
+        glm::vec3 worldUp(0, 1, 0);
+        glm::mat3 yawRotation = m_camera.rotationMatrix(worldUp, glm::radians(yawAngle));
+        look = glm::normalize(yawRotation * glm::vec3(0.0f, look.y, -1.0f)); // Apply clamped yaw
+        up = glm::normalize(yawRotation * up);
     }
 
-    // y rotation around right vector
-    if (deltaY != 0) {
-        glm::vec3 right = glm::normalize(glm::cross(look, up));
-        glm::mat3 yRotation = m_camera.rotationMatrix(right, deltaY * rotationSpeed);
-        look = yRotation * look;
-        up = yRotation * up;
-    }
 
+    // update the camera with the adjusted vectors
     m_camera.setLook(glm::vec4(look, 0.0f));
     m_camera.setUp(glm::vec4(up, 0.0f));
     m_view = m_camera.getViewMatrix();
@@ -238,63 +251,56 @@ void Realtime::rotateCamera(float deltaX, float deltaY) {
 
 void Realtime::timerEvent(QTimerEvent *event) {
     int elapsedms = m_elapsedTimer.elapsed();
-    float deltaTime = elapsedms * 0.001f;
+    float deltaTime = elapsedms * 0.001f; // Convert milliseconds to seconds
     m_elapsedTimer.restart();
 
-    glm::vec4 pos = m_camera.getPos();
-    glm::vec3 look = - m_camera.getLook();
-    glm::vec3 up = m_camera.getUp();
+    glm::vec4 currentPos = m_camera.getPos();
 
-    glm::vec3 lookVector = glm::normalize(-look);
-    glm::vec3 rightVector = glm::cross(glm::normalize(look), glm::normalize(up));
+    // gravity: update vertical velocity and apply to position
+    m_verticalVelocity -= settings.gravity * deltaTime;
+    currentPos.y += m_verticalVelocity * deltaTime;
 
+    // check for ground collision
+    if (currentPos.y <= settings.min_height) {
+        currentPos.y = settings.min_height;
+        m_verticalVelocity = 0.0f; // Reset vertical velocity on the ground
+    }
 
-    // Use deltaTime and m_keyMap here to move around
-
+    // movement adjustments
     glm::vec3 shift = glm::vec3(0.0f);
-    const float moveSpeed = 5.0f;
-    float moveAmount = moveSpeed * deltaTime;
+    float moveSpeed = settings.moveSpeed * deltaTime;
 
-    // W: Translates the camera in the direction of the look vector
+    // move forward (W)
     if (m_keyMap[Qt::Key_W]) {
-        // shift += lookVector * moveAmount;
-        shift += glm::vec3(1.0f, 0.0f, 0.0f) * moveAmount; // fix movement to up the road
+        shift += glm::vec3(1.0f, 0.0f, 0.0f) * moveSpeed; // Fixed forward movement along X
     }
 
-    // S: Translates the camera in the opposite direction of the look vector
+    // move backward (S)
     if (m_keyMap[Qt::Key_S]) {
-        // shift -= lookVector * moveAmount;
-        shift += glm::vec3(1.0f, 0.0f, 0.0f) * moveAmount; // fix movement to down the road
+        shift -= glm::vec3(1.0f, 0.0f, 0.0f) * moveSpeed; // Fixed backward movement along X
     }
 
-    // // A: Translates the camera in the left direction, perpendicular to the look and up vectors
-    // if (m_keyMap[Qt::Key_A]) {
-    //     shift += rightVector * moveAmount;
-    // }
-
-    // // D: Translates the camera in the right direction, also perpendicular to the look and up vectors. This movement should be opposite to that of pressing A
-    // if (m_keyMap[Qt::Key_D]) {
-    //     shift -= rightVector * moveAmount;
-    // }
-
-    // Space: Translates the camera along the world space vector (0, 1, 0)
-    if (m_keyMap[Qt::Key_Space]) {
-        // shift += glm::vec3(0, 1, 0) * moveAmount;
-
+    // jump
+    if (m_keyMap[Qt::Key_Space] && currentPos.y <= settings.min_height) {
+        m_verticalVelocity = settings.jump_force; // Apply jump impulse
     }
 
-    // Ctrl: Translates the camera along the world space vector (0, -1, 0)
-    if (m_keyMap[Qt::Key_Control]) {
-        shift -= glm::vec3(0, 1, 0) * moveAmount;
+    // spring
+    if(m_keyMap[Qt::Key_Shift]) {
+        settings.moveSpeed = 5.0f;
+    } else {
+        settings.moveSpeed = 2.5f;
     }
 
-    if (glm::length(shift) > 0) {
-        m_camera.setPos(pos + glm::vec4(shift, 0.0f));
+    // update position and camera
+    currentPos += glm::vec4(shift, 0.0f);
+    m_camera.setPos(currentPos);
+    m_view = m_camera.getViewMatrix();
 
-        m_view = m_camera.getViewMatrix();
-        update();
-    }
+    // call paintGL
+    update();
 }
+
 
 // DO NOT EDIT
 void Realtime::saveViewportImage(std::string filePath) {

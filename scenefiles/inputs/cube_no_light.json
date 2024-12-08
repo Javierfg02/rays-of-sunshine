@@ -26,28 +26,6 @@
     ]
   },
   "groups": [
-    {
-      "name": "Lights",
-      "lights": [
-        {
-          "color": [
-            1,
-            1,
-            1
-          ],
-          "type": "point",
-          "attenuationCoeff": [
-            0,
-            0,
-            0
-          ]}
-      ],
-      "translate": [
-        1,
-        1,
-        2
-      ]},
-    {
       "name": "A lonely cube",
       "primitives": [
         {

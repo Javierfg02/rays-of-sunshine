@@ -28,7 +28,13 @@ struct Settings {
     float windowWidth = 0.2f;
     float windowHeight = 0.3f;
     glm::vec3 windowColor = glm::vec3(255.f/255.f, 197.f/255.f, 143.f/255.f);
-    glm::vec3 wallColor = glm::vec3(0.8f, 0.8f, 0.8f);
+    glm::vec3 wallColor = glm::vec3(0.4f, 0.4f, 0.4f);
+
+    // gravity
+    float moveSpeed = 2.5f;
+    float gravity = 9.81;
+    float min_height = 2.0f;
+    float jump_force = 3.5f;
 };
 
 
