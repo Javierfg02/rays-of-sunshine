@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
 
     const QStringList args = parser.positionalArguments();
     if (args.size() < 1) {
-        std::cerr << "Usage: " << argv[0] << " <input file name> [output file name]" << std::endl;
+        std::cout << "To load a scene file use arugments: " << " <input file name> [output file name]" << std::endl;
         return 1;
     }
 

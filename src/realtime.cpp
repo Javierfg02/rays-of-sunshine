@@ -64,6 +64,15 @@ void Realtime::initializeGL() {
     std::vector<float> allBuildingData; // building vertex data
     BuildingGenerator* buildingGenerator = new BuildingGenerator();
     allBuildingData = buildingGenerator->initializeBuildings();
+
+    // set camera to road
+    glm::vec3 roadPos = buildingGenerator->getRandomRoadPosition();
+    // Position camera at start of road, looking down it
+    m_renderData.cameraData.pos = glm::vec4(roadPos.x + 10.0f, 1.0f, roadPos.z, 1);  // On the road
+    m_renderData.cameraData.look = glm::vec4(1, 0, 0, 0); // look down the road (along x-axis)
+    m_renderData.cameraData.up = glm::vec4(0, 1, 0, 0);
+    m_renderData.cameraData.heightAngle = 45.0f * M_PI / 180.0f;
+
     m_vertexCount = allBuildingData.size() / 6;
 
     // vao and vbo setup
@@ -84,19 +93,13 @@ void Realtime::initializeGL() {
 
     m_aspect_ratio = static_cast<float>(width()) / static_cast<float>(height());
 
-    // camera data
-    m_renderData.cameraData.pos = glm::vec4(50, 20, 80, 1);  // Position to see a good portion of the 100x100 city
-    m_renderData.cameraData.look = glm::vec4(0, -0.2, -1, 0);
-    m_renderData.cameraData.up = glm::vec4(0, 1, 0, 0);
-    m_renderData.cameraData.heightAngle = 45.0f * M_PI / 180.0f;
-
     // transformation matrices
     m_camera = Camera(m_renderData.cameraData,
                       size().width() * m_devicePixelRatio,
                       size().height() * m_devicePixelRatio);
 
     m_view = m_camera.getViewMatrix();
-    m_proj = getProjectionMatrix(0.1f, 100.0f);
+    m_proj = getProjectionMatrix(0.1f, 100.0f);  // much farther far plane to see more of the city
 
     // Since we've baked the transforms into the vertices, we only need an identity matrix
     RenderShapeData buildingShape;
@@ -254,27 +257,30 @@ void Realtime::timerEvent(QTimerEvent *event) {
 
     // W: Translates the camera in the direction of the look vector
     if (m_keyMap[Qt::Key_W]) {
-        shift += lookVector * moveAmount;
+        // shift += lookVector * moveAmount;
+        shift += glm::vec3(1.0f, 0.0f, 0.0f) * moveAmount; // fix movement to up the road
     }
 
     // S: Translates the camera in the opposite direction of the look vector
     if (m_keyMap[Qt::Key_S]) {
-        shift -= lookVector * moveAmount;
+        // shift -= lookVector * moveAmount;
+        shift += glm::vec3(1.0f, 0.0f, 0.0f) * moveAmount; // fix movement to down the road
     }
 
-    // A: Translates the camera in the left direction, perpendicular to the look and up vectors
-    if (m_keyMap[Qt::Key_A]) {
-        shift += rightVector * moveAmount;
-    }
+    // // A: Translates the camera in the left direction, perpendicular to the look and up vectors
+    // if (m_keyMap[Qt::Key_A]) {
+    //     shift += rightVector * moveAmount;
+    // }
 
-    // D: Translates the camera in the right direction, also perpendicular to the look and up vectors. This movement should be opposite to that of pressing A
-    if (m_keyMap[Qt::Key_D]) {
-        shift -= rightVector * moveAmount;
-    }
+    // // D: Translates the camera in the right direction, also perpendicular to the look and up vectors. This movement should be opposite to that of pressing A
+    // if (m_keyMap[Qt::Key_D]) {
+    //     shift -= rightVector * moveAmount;
+    // }
 
     // Space: Translates the camera along the world space vector (0, 1, 0)
     if (m_keyMap[Qt::Key_Space]) {
-        shift += glm::vec3(0, 1, 0) * moveAmount;
+        // shift += glm::vec3(0, 1, 0) * moveAmount;
+
     }
 
     // Ctrl: Translates the camera along the world space vector (0, -1, 0)

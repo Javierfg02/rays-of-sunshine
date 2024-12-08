@@ -12,7 +12,7 @@ class BuildingGenerator {
 
 public:
 
-    BuildingGenerator(float citySize = 100.f);
+    BuildingGenerator(float citySize = 150.f);
     ~BuildingGenerator();
 
     struct GridCell {
@@ -27,14 +27,13 @@ public:
 
     std::vector<float> initializeBuildings();
     void generateGrid();
-    void renderBuildings();
+    glm::vec3 getRandomRoadPosition();
     GLuint getShader();
 
 private:
     float citySize;
-    GLuint m_shader;
-    GLbuffers buildingBuffers;
     std::vector<GridCell> m_grid;
+    std::vector<glm::vec3> m_roadPositions;
 };
 
 #endif // BUILDINGGENERATOR_H

@@ -62,6 +62,10 @@ void BuildingGenerator::generateGrid() {
     std::vector<bool> roadRows(gridSize, false);
     std::vector<bool> roadCols(gridSize, false);
 
+    // Make middle row always a road
+    int middleRow = gridSize / 2;
+    roadRows[middleRow] = true;
+
     // randomly select road rows
     for (int i = 0; i < gridSize; i++) {
         if (arc4random() % 7 == 0) { // 14% chance for each row to be a road
@@ -97,4 +101,13 @@ void BuildingGenerator::generateGrid() {
         }
     }
     std::cout << "grid rows " << m_grid.size() / 2 << std::endl;
+}
+
+glm::vec3 BuildingGenerator::getRandomRoadPosition() {
+    int gridSize = this->citySize / settings.buildingMaxWidth;
+
+    // Always return a position on the middle road, at the edge
+    float xPos = 0; // Start of the road
+    float zPos = (gridSize / 2) * settings.buildingMaxWidth;
+    return glm::vec3(xPos, 0.0f, zPos);
 }
