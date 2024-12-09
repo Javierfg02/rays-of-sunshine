@@ -4,11 +4,11 @@
 
 void Building::updateParams() {
     // random building parameters
-    int numFloors = 3 + arc4random() % 8;  // 3 to 10 floors
-    int windowsPerFloor = 2 + arc4random() % 3;  // 2 to 4 windows
-    float floorHeight = 0.8f + (arc4random() % 100) / 100.0f * 0.8f;
-    float buildingWidth = 1.0f + (arc4random() % (int) settings.buildingMaxWidth) / settings.buildingMaxWidth; // width is 0 - 100
-    float buildingDepth = 1.0f + (arc4random() % (int) settings.buildingMaxWidth) / settings.buildingMaxWidth;; // depth is 0 - 100
+    int numFloors = 3 + rand() % 8;  // 3 to 10 floors
+    int windowsPerFloor = 2 + rand() % 3;  // 2 to 4 windows
+    float floorHeight = 0.8f + (rand() % 100) / 100.0f * 0.8f;
+    float buildingWidth = 1.0f + (rand() % (int) settings.buildingMaxWidth) / settings.buildingMaxWidth; // width is 0 - 100
+    float buildingDepth = 1.0f + (rand() % (int) settings.buildingMaxWidth) / settings.buildingMaxWidth;; // depth is 0 - 100
     m_numFloors = numFloors;
     m_windowsPerFloor = windowsPerFloor;
     m_floorHeight = floorHeight;
@@ -123,7 +123,7 @@ void Building::addWindows() {
             glm::vec3 frontBottomLeft(windowX - windowWidth/2, windowY, m_buildingDepth/2 + 0.01f);
             glm::vec3 frontBottomRight(windowX + windowWidth/2, windowY, m_buildingDepth/2 + 0.01f);
 
-            // front face windoes
+            // front face windows
             insertVec3WithColor(m_vertexData, frontTopLeft, windowColor);
             insertVec3WithColor(m_vertexData, frontBottomLeft, windowColor);
             insertVec3WithColor(m_vertexData, frontTopRight, windowColor);
@@ -131,7 +131,7 @@ void Building::addWindows() {
             insertVec3WithColor(m_vertexData, frontBottomLeft, windowColor);
             insertVec3WithColor(m_vertexData, frontBottomRight, windowColor);
 
-            // back face windoes
+            // back face windows
             glm::vec3 backTopLeft(windowX - windowWidth/2, windowY + windowHeight, -m_buildingDepth/2 - 0.01f);
             glm::vec3 backTopRight(windowX + windowWidth/2, windowY + windowHeight, -m_buildingDepth/2 - 0.01f);
             glm::vec3 backBottomLeft(windowX - windowWidth/2, windowY, -m_buildingDepth/2 - 0.01f);
