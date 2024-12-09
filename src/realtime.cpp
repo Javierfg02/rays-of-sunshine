@@ -41,6 +41,7 @@ void Realtime::finish() {
 }
 
 void Realtime::initializeGL() {
+    this->makeCurrent();
     m_devicePixelRatio = this->devicePixelRatio();
     m_timer = startTimer(1000/60);
     m_elapsedTimer.start();
@@ -55,6 +56,8 @@ void Realtime::initializeGL() {
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
+    // glFrontFace(GL_CCW);  // Counter-clockwise winding
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);  // Wireframe mode
     glClearColor(settings.backgroundColor[0], settings.backgroundColor[1], settings.backgroundColor[2], settings.backgroundColor[3]);
 
     // shader manager
@@ -73,20 +76,33 @@ void Realtime::initializeGL() {
     m_renderData.cameraData.up = glm::vec4(0, 1, 0, 0);
     m_renderData.cameraData.heightAngle = 45.0f * M_PI / 180.0f;
 
-    m_vertexCount = allBuildingData.size() / 6;
+    m_vertexCount = allBuildingData.size() / 9; // pos, color, normal
+
+    std::cout << "Total vertex data size: " << allBuildingData.size() << std::endl;
+    std::cout << "Calculated vertex count: " << m_vertexCount << std::endl;
 
     // vao and vbo setup
     glGenBuffers(1, &m_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+
+    for(int i = 0; i < std::min(36, (int)allBuildingData.size()); i += 9) {
+        std::cout << "Vertex " << i/9 << ": ";
+        std::cout << "pos(" << allBuildingData[i] << "," << allBuildingData[i+1] << "," << allBuildingData[i+2] << ") ";
+        std::cout << "norm(" << allBuildingData[i+3] << "," << allBuildingData[i+4] << "," << allBuildingData[i+5] << ") ";
+        std::cout << "col(" << allBuildingData[i+6] << "," << allBuildingData[i+7] << "," << allBuildingData[i+8] << ")\n";
+    }
+
     glBufferData(GL_ARRAY_BUFFER, allBuildingData.size() * sizeof(float), allBuildingData.data(), GL_STATIC_DRAW);
 
     glGenVertexArrays(1, &m_vao);
     glBindVertexArray(m_vao);
 
     glEnableVertexAttribArray(0); // position
-    glEnableVertexAttribArray(1); // color
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1); // normal
+    // glEnableVertexAttribArray(3); // color
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)0); // position starts at 0
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float))); // normal starts at 3
+    // glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float))); // color starts at 6
 
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -99,7 +115,7 @@ void Realtime::initializeGL() {
                       size().height() * m_devicePixelRatio);
 
     m_view = m_camera.getViewMatrix();
-    m_proj = m_camera.getProjectionMatrix();  // much farther far plane to see more of the city
+    m_proj = m_camera.getProjectionMatrix();
 
     // Since we've baked the transforms into the vertices, we only need an identity matrix
     RenderShapeData buildingShape;
@@ -112,6 +128,10 @@ void Realtime::paintGL() {
 
     // use the building shader
     GLuint shader = m_shaderManager.getShader(ShaderManager::ShaderType::BUILDING);
+    if (!shader) {
+        std::cerr << "Error: Building shader not found!" << std::endl;
+        return;
+    }
     glUseProgram(shader);
 
     // send matrices to shader
@@ -271,8 +291,6 @@ void Realtime::timerEvent(QTimerEvent *event) {
     } else {
         this->m_walkingTime = this->t;
     }
-
-    std::cout << "currentPos.y: " << currentPos.y << std::endl;
 
     // jump
     if (m_keyMap[Qt::Key_Space] && currentPos.y <= settings.min_height) {

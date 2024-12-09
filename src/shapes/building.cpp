@@ -7,15 +7,15 @@ void Building::updateParams() {
     int numFloors = 3 + arc4random() % 8;  // 3 to 10 floors
     int windowsPerFloor = 2 + arc4random() % 3;  // 2 to 4 windows
     float floorHeight = 0.8f + (arc4random() % 100) / 100.0f * 0.8f;
-    float buildingWidth = 1.0f + (arc4random() % (int) settings.buildingMaxWidth) / settings.buildingMaxWidth; // width is 0 - 100
-    float buildingDepth = 1.0f + (arc4random() % (int) settings.buildingMaxWidth) / settings.buildingMaxWidth;; // depth is 0 - 100
+    float buildingWidth = 1.0f + (arc4random() % (int) settings.buildingMaxWidth) / settings.buildingMaxWidth; // width is 0 - 5
+    float buildingDepth = 1.0f + (arc4random() % (int) settings.buildingMaxWidth) / settings.buildingMaxWidth;; // depth is 0 - 5
     m_numFloors = numFloors;
     m_windowsPerFloor = windowsPerFloor;
     m_floorHeight = floorHeight;
     m_buildingWidth = buildingWidth;
     m_buildingDepth = buildingDepth;
 
-    // TODO: add a randomized (or pseudo randomized) texture to each building - that is how we will make them look more real
+    // TODO: add a randomized (or pseudo randomized) texture to each building
 
     // generate the building
     setVertexData();
@@ -25,11 +25,17 @@ std::vector<float> Building::generateShape() {
     return m_vertexData;
 }
 
-void Building::insertVec3WithColor(std::vector<float> &data, glm::vec3 pos, glm::vec3 color) {
+void Building::insertVec3(std::vector<float> &data, glm::vec3 pos, glm::vec3 normal, glm::vec3 color) {
     // position
     data.push_back(pos.x);
     data.push_back(pos.y);
     data.push_back(pos.z);
+
+    // normal
+    data.push_back(normal.x);
+    data.push_back(normal.y);
+    data.push_back(normal.z);
+
     // color
     data.push_back(color.r);
     data.push_back(color.g);
@@ -48,6 +54,7 @@ void Building::setVertexData() {
     glm::vec3 frontTopRight(width/2, totalHeight, depth/2);
     glm::vec3 frontBottomLeft(-width/2, 0, depth/2);
     glm::vec3 frontBottomRight(width/2, 0, depth/2);
+    glm::vec3 frontNormal(0, 0, 1);
     makeFace(frontTopLeft, frontTopRight, frontBottomLeft, frontBottomRight);
 
     // back face (facing away from camera, z negative)
@@ -55,6 +62,7 @@ void Building::setVertexData() {
     glm::vec3 backTopRight(width/2, totalHeight, -depth/2);
     glm::vec3 backBottomLeft(-width/2, 0, -depth/2);
     glm::vec3 backBottomRight(width/2, 0, -depth/2);
+    glm::vec3 backNormal(0,0,-1);
     // Note: back face needs reverse winding order
     makeFace(backTopRight, backTopLeft, backBottomRight, backBottomLeft);
 
@@ -63,6 +71,7 @@ void Building::setVertexData() {
     glm::vec3 rightTopRight(width/2, totalHeight, depth/2);
     glm::vec3 rightBottomLeft(width/2, 0, -depth/2);
     glm::vec3 rightBottomRight(width/2, 0, depth/2);
+    glm::vec3 rightNormal(1, 0, 0);
     makeFace(rightTopRight, rightTopLeft, rightBottomRight, rightBottomLeft);
 
     // left face (x negative)
@@ -70,17 +79,20 @@ void Building::setVertexData() {
     glm::vec3 leftTopRight(-width/2, totalHeight, depth/2);
     glm::vec3 leftBottomLeft(-width/2, 0, -depth/2);
     glm::vec3 leftBottomRight(-width/2, 0, depth/2);
+    glm::vec3 leftNormal(-1, 0, 0);
     makeFace(leftTopLeft, leftTopRight, leftBottomLeft, leftBottomRight);
 
     // top face
+    glm::vec3 topNormal(0, 1, 0);
     makeFace(frontTopRight, frontTopLeft, backTopRight, backTopLeft);
 
     // bottom face
+    glm::vec3 bottomNormal(0, -1, 0);
     makeFace(frontBottomLeft, frontBottomRight, backBottomLeft, backBottomRight);
 
     // Add windows after basic structure
     if (m_windowsPerFloor > 0) {
-        addWindows();
+        // addWindows();
     }
 }
 
@@ -88,16 +100,20 @@ void Building::makeFace(glm::vec3 topLeft, glm::vec3 topRight,
                         glm::vec3 bottomLeft, glm::vec3 bottomRight) {
     glm::vec3 wallColor = settings.wallColor; // Light gray for walls
 
+    glm::vec3 edge1 = bottomRight - bottomLeft;  // First edge from first to second vertex
+    glm::vec3 edge2 = topRight - bottomLeft;     // Second edge from first to third vertex
+    glm::vec3 normal = glm::normalize(glm::cross(edge1, edge2));
+
     // Draw face using consistent counter-clockwise winding order
     // First triangle
-    insertVec3WithColor(m_vertexData, bottomLeft, wallColor);
-    insertVec3WithColor(m_vertexData, bottomRight, wallColor);
-    insertVec3WithColor(m_vertexData, topRight, wallColor);
+    insertVec3(m_vertexData, bottomLeft, normal, wallColor);
+    insertVec3(m_vertexData, bottomRight, normal, wallColor);
+    insertVec3(m_vertexData, topRight, normal, wallColor);
 
     // Second triangle
-    insertVec3WithColor(m_vertexData, bottomLeft, wallColor);
-    insertVec3WithColor(m_vertexData, topRight, wallColor);
-    insertVec3WithColor(m_vertexData, topLeft, wallColor);
+    insertVec3(m_vertexData, bottomLeft, normal, wallColor);
+    insertVec3(m_vertexData, topRight, normal, wallColor);
+    insertVec3(m_vertexData, topLeft, normal, wallColor);
 }
 
 
@@ -123,27 +139,38 @@ void Building::addWindows() {
             glm::vec3 frontBottomLeft(windowX - windowWidth/2, windowY, m_buildingDepth/2 + 0.01f);
             glm::vec3 frontBottomRight(windowX + windowWidth/2, windowY, m_buildingDepth/2 + 0.01f);
 
-            // front face windoes
-            insertVec3WithColor(m_vertexData, frontTopLeft, windowColor);
-            insertVec3WithColor(m_vertexData, frontBottomLeft, windowColor);
-            insertVec3WithColor(m_vertexData, frontTopRight, windowColor);
-            insertVec3WithColor(m_vertexData, frontTopRight, windowColor);
-            insertVec3WithColor(m_vertexData, frontBottomLeft, windowColor);
-            insertVec3WithColor(m_vertexData, frontBottomRight, windowColor);
+            // glm::vec3 frontEdge1 = frontBottomLeft - frontTopLeft;
+            // glm::vec3 frontEdge2 = frontTopRight - frontTopLeft;
+            // glm::vec3 frontNormal = glm::normalize(glm::cross(frontEdge1, frontEdge2));
 
-            // back face windoes
+            glm::vec3 frontNormal(0, 0, 1); // windows always face straight out
+
+            // front face windows
+            // insertVec3(m_vertexData, frontTopLeft, frontNormal, windowColor);
+            // insertVec3(m_vertexData, frontBottomLeft, frontNormal, windowColor);
+            // insertVec3(m_vertexData, frontTopRight, frontNormal, windowColor);
+            // insertVec3(m_vertexData, frontTopRight, frontNormal, windowColor);
+            // insertVec3(m_vertexData, frontBottomLeft, frontNormal, windowColor);
+            // insertVec3(m_vertexData, frontBottomRight, frontNormal, windowColor);
+
+            // back face windows
             glm::vec3 backTopLeft(windowX - windowWidth/2, windowY + windowHeight, -m_buildingDepth/2 - 0.01f);
             glm::vec3 backTopRight(windowX + windowWidth/2, windowY + windowHeight, -m_buildingDepth/2 - 0.01f);
             glm::vec3 backBottomLeft(windowX - windowWidth/2, windowY, -m_buildingDepth/2 - 0.01f);
             glm::vec3 backBottomRight(windowX + windowWidth/2, windowY, -m_buildingDepth/2 - 0.01f);
 
+            // glm::vec3 backEdge1 = backBottomLeft - backTopLeft;
+            // glm::vec3 backEdge2 = backTopRight - backTopLeft;
+            // glm::vec3 backNormal = glm::normalize(glm::cross(backEdge1, backEdge2));
 
-            insertVec3WithColor(m_vertexData, backTopRight, windowColor);
-            insertVec3WithColor(m_vertexData, backBottomRight, windowColor);
-            insertVec3WithColor(m_vertexData, backTopLeft, windowColor);
-            insertVec3WithColor(m_vertexData, backTopLeft, windowColor);
-            insertVec3WithColor(m_vertexData, backBottomRight, windowColor);
-            insertVec3WithColor(m_vertexData, backBottomLeft, windowColor);
+            glm::vec3 backNormal(0, 0, -1); // windows always face straight out
+
+            // insertVec3(m_vertexData, backTopRight, backNormal, windowColor);
+            // insertVec3(m_vertexData, backBottomRight, backNormal, windowColor);
+            // insertVec3(m_vertexData, backTopLeft, backNormal, windowColor);
+            // insertVec3(m_vertexData, backTopLeft, backNormal, windowColor);
+            // insertVec3(m_vertexData, backBottomRight, backNormal, windowColor);
+            // insertVec3(m_vertexData, backBottomLeft, backNormal, windowColor);
         }
     }
 }

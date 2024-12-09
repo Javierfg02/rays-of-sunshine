@@ -4,6 +4,12 @@
 #include <vector>
 #include <glm/glm.hpp>
 
+struct Vertex {
+    glm::vec3 position;
+    glm::vec3 normal;
+    glm::vec3 texCoord;
+};
+
 class Building {
 public:
     Building() = default;
@@ -30,7 +36,7 @@ private:
     void makeFace(glm::vec3 topLeft, glm::vec3 topRight,
                   glm::vec3 bottomLeft, glm::vec3 bottomRight);
     void addWindows();
-    void insertVec3WithColor(std::vector<float> &data, glm::vec3 pos, glm::vec3 color);
+    void insertVec3(std::vector<float> &data, glm::vec3 pos, glm::vec3 normal, glm::vec3 color);
 };
 
 #endif // BUILDING_H
