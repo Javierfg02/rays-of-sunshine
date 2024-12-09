@@ -68,7 +68,7 @@ void BuildingGenerator::generateGrid() {
 
     // randomly select road rows
     for (int i = 0; i < gridSize; i++) {
-        if (arc4random() % 7 == 0) { // 14% chance for each row to be a road
+        if (rand() % 7 == 0) { // 14% chance for each row to be a road
             roadRows[i] = true;
             numRoads++;
         }
@@ -76,7 +76,7 @@ void BuildingGenerator::generateGrid() {
 
     // randomly select road columns
     for (int j = 0; j < gridSize; j++) {
-        if (arc4random() % 7 == 0) { // 14% chance for each column to be a road
+        if (rand() % 7 == 0) { // 14% chance for each column to be a road
             roadCols[j] = true;
             numRoads++;
         }

@@ -91,4 +91,20 @@ private:
     std::vector<RenderShapeData> m_shapes;
     void rotateCamera(float deltaX, float deltaY);
 
+    // FBO
+    void makeFBO();
+    void paintTexture(GLuint texture);
+
+    GLuint m_fbo;
+    GLuint m_fbo_texture;
+    GLuint m_fbo_renderbuffer;
+    GLuint m_fullscreen_vbo;
+    GLuint m_fullscreen_vao;
+
+    GLuint m_defaultFBO;
+    int m_fbo_width;
+    int m_fbo_height;
+    int m_screen_width;
+    int m_screen_height;
+
 };

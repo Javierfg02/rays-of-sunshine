@@ -43,6 +43,11 @@ void Realtime::finish() {
 void Realtime::initializeGL() {
     this->makeCurrent();
     m_devicePixelRatio = this->devicePixelRatio();
+    m_defaultFBO = 2;
+    m_screen_width = size().width() * m_devicePixelRatio;
+    m_screen_height = size().height() * m_devicePixelRatio;
+    m_fbo_width = m_screen_width;
+    m_fbo_height = m_screen_height;
     m_timer = startTimer(1000/60);
     m_elapsedTimer.start();
 
@@ -56,8 +61,7 @@ void Realtime::initializeGL() {
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
-    // glFrontFace(GL_CCW);  // Counter-clockwise winding
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);  // Wireframe mode
+    glViewport(0, 0, size().width() * m_devicePixelRatio, size().height() * m_devicePixelRatio);
     glClearColor(settings.backgroundColor[0], settings.backgroundColor[1], settings.backgroundColor[2], settings.backgroundColor[3]);
 
     // shader manager
@@ -70,13 +74,13 @@ void Realtime::initializeGL() {
 
     // set camera to road
     glm::vec3 roadPos = buildingGenerator->getRandomRoadPosition();
-    // Position camera at start of road, looking down it
+    // position camera at start of road, looking down it
     m_renderData.cameraData.pos = glm::vec4(roadPos.x + 10.0f, 1.0f, roadPos.z, 1);  // On the road
     m_renderData.cameraData.look = glm::vec4(1, 0, 0, 0); // look down the road (along x-axis)
     m_renderData.cameraData.up = glm::vec4(0, 1, 0, 0);
     m_renderData.cameraData.heightAngle = 45.0f * M_PI / 180.0f;
 
-    m_vertexCount = allBuildingData.size() / 9; // pos, color, normal
+    m_vertexCount = allBuildingData.size() / 6; // pos, color, normal
 
     std::cout << "Total vertex data size: " << allBuildingData.size() << std::endl;
     std::cout << "Calculated vertex count: " << m_vertexCount << std::endl;
@@ -100,14 +104,12 @@ void Realtime::initializeGL() {
     glEnableVertexAttribArray(0); // position
     glEnableVertexAttribArray(1); // normal
     // glEnableVertexAttribArray(3); // color
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)0); // position starts at 0
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float))); // normal starts at 3
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0); // position starts at 0
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float))); // normal starts at 3
     // glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float))); // color starts at 6
 
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    m_aspect_ratio = static_cast<float>(width()) / static_cast<float>(height());
 
     // transformation matrices
     m_camera = Camera(m_renderData.cameraData,
@@ -121,29 +123,128 @@ void Realtime::initializeGL() {
     RenderShapeData buildingShape;
     buildingShape.ctm = glm::mat4(1.0f);
     m_shapes.push_back(buildingShape);
+
+    // use the dof shader
+    GLuint dof_shader = m_shaderManager.getShader(ShaderManager::ShaderType::DEPTH_OF_FIELD);
+    glUseProgram(dof_shader);
+
+    GLint textureLoc = glGetUniformLocation(dof_shader, "texture");
+    glUniform1i(textureLoc, 0);
+    glUseProgram(0);
+
+    std::vector<GLfloat> fullscreen_quad_data =
+        { //    POSITIONS    //    UV COORDS
+            -1.0f, 1.0f,  0.0f,   0.0f, 1.0f,
+            -1.0f, -1.0f, 0.0f,   0.0f, 0.0f,
+            1.0f,  -1.0f, 0.0f,   1.0f, 0.0f,
+            1.0f,  1.0f,  0.0f,   1.0f, 1.0f,
+            -1.0f, 1.0f,  0.0f,   0.0f, 1.0f,
+            1.0f,  -1.0f, 0.0f,   1.0f, 0.0f
+        };
+
+    // generate and bind a VBO and a VAO for a fullscreen quad
+    glGenBuffers(1, &m_fullscreen_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, m_fullscreen_vbo);
+    glBufferData(GL_ARRAY_BUFFER, fullscreen_quad_data.size() * sizeof(GLfloat), fullscreen_quad_data.data(), GL_STATIC_DRAW);
+    glGenVertexArrays(1, &m_fullscreen_vao);
+    glBindVertexArray(m_fullscreen_vao);
+
+    // define vao attributes
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), reinterpret_cast<void *>(0));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), reinterpret_cast<void *>(3 * sizeof(GLfloat)));
+
+    // unbind the fullscreen quad's VBO and VAO
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    // makeFBO();
 }
 
 void Realtime::paintGL() {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+    // glViewport(0, 0, m_fbo_width, m_fbo_height);
+    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // use the building shader
-    GLuint shader = m_shaderManager.getShader(ShaderManager::ShaderType::BUILDING);
-    if (!shader) {
-        std::cerr << "Error: Building shader not found!" << std::endl;
-        return;
-    }
-    glUseProgram(shader);
+    GLuint building_shader = m_shaderManager.getShader(ShaderManager::ShaderType::BUILDING);
+    glUseProgram(building_shader);
 
     // send matrices to shader
     glm::mat4 model = m_shapes[0].ctm;
-    glUniformMatrix4fv(glGetUniformLocation(shader, "modelMatrix"), 1, GL_FALSE, &model[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(shader, "viewMatrix"), 1, GL_FALSE, &m_view[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(shader, "projMatrix"), 1, GL_FALSE, &m_proj[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(building_shader, "modelMatrix"), 1, GL_FALSE, &model[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(building_shader, "viewMatrix"), 1, GL_FALSE, &m_view[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(building_shader, "projMatrix"), 1, GL_FALSE, &m_proj[0][0]);
 
     // draw building
     glBindVertexArray(m_vao); // vao will keep a reference to the vbo, so only need to bind vao
     glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
     glBindVertexArray(0);
+    glUseProgram(0);
+
+    // glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
+    // glViewport(0, 0, m_screen_width, m_screen_height);
+    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // PAINT TEXTURE -----------------------------
+    // paintTexture(m_fbo_texture);
+}
+
+void Realtime::makeFBO(){
+    // Task 19: Generate and bind an empty texture, set its min/mag filter interpolation, then unbind
+    glGenTextures(1, &m_fbo_texture);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, m_fbo_texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_fbo_width, m_fbo_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    // Task 20: Generate and bind a renderbuffer of the right size, set its format, then unbind
+    glGenRenderbuffers(1, &m_fbo_renderbuffer);
+    glBindRenderbuffer(GL_RENDERBUFFER, m_fbo_renderbuffer);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_fbo_width, m_fbo_height);
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+    // Task 18: Generate and bind an FBO
+    glGenFramebuffers(1, &m_fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+
+    // Task 21: Add our texture as a color attachment, and our renderbuffer as a depth+stencil attachment, to our FBO
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_fbo_texture, 0);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_fbo_renderbuffer);
+
+    // Task 22: Unbind the FBO
+    glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
+}
+
+void Realtime::paintTexture(GLuint texture){
+    // use the building shader
+    GLuint dof_shader = m_shaderManager.getShader(ShaderManager::ShaderType::DEPTH_OF_FIELD);
+    glUseProgram(dof_shader);
+
+    // GLint kernelLoc = glGetUniformLocation(dof_shader, "kernel");
+    // std::vector<float> kernel = {
+    //     1.0, 1.0, 1.0, 1.0, 1.0,
+    //     1.0, 1.0, 1.0, 1.0, 1.0,
+    //     1.0, 1.0, 1.0, 1.0, 1.0,
+    //     1.0, 1.0, 1.0, 1.0, 1.0,
+    //     1.0, 1.0, 1.0, 1.0, 1.0
+    // };
+    // glUniform1fv(kernelLoc, 25, kernel.data());
+
+    // GLint uvChangeLoc = glGetUniformLocation(dof_shader, "uvChange");
+    // glUniform2f(uvChangeLoc, 1.0 / m_fbo_width, 1.0 / m_fbo_height);
+
+    // bind vao, draw, unbind vao
+    glBindVertexArray(m_fullscreen_vao);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindVertexArray(0);
+
     glUseProgram(0);
 }
 
@@ -152,7 +253,6 @@ void Realtime::resizeGL(int w, int h) {
     m_aspect_ratio = static_cast<float>(w) / static_cast<float>(h);
     m_proj = m_camera.getProjectionMatrix();
 }
-
 
 void Realtime::sceneChanged() {
     SceneParser::parse(settings.sceneFilePath, this->m_renderData);
@@ -210,7 +310,6 @@ void Realtime::mouseMoveEvent(QMouseEvent *event) {
     }
 }
 
-
 void Realtime::rotateCamera(float deltaX, float deltaY) {
     const float rotationSpeed = 0.002f;
     static float pitchAngle = 0.0f;
@@ -250,7 +349,6 @@ void Realtime::rotateCamera(float deltaX, float deltaY) {
     m_camera.setUp(glm::vec4(up, 0.0f));
     m_view = m_camera.getViewMatrix();
 }
-
 
 void Realtime::timerEvent(QTimerEvent *event) {
     int elapsedms = m_elapsedTimer.elapsed();

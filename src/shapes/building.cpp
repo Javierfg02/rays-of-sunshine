@@ -4,11 +4,11 @@
 
 void Building::updateParams() {
     // random building parameters
-    int numFloors = 3 + arc4random() % 8;  // 3 to 10 floors
-    int windowsPerFloor = 2 + arc4random() % 3;  // 2 to 4 windows
-    float floorHeight = 0.8f + (arc4random() % 100) / 100.0f * 0.8f;
-    float buildingWidth = 1.0f + (arc4random() % (int) settings.buildingMaxWidth) / settings.buildingMaxWidth; // width is 0 - 5
-    float buildingDepth = 1.0f + (arc4random() % (int) settings.buildingMaxWidth) / settings.buildingMaxWidth;; // depth is 0 - 5
+    int numFloors = 3 + rand() % 8;  // 3 to 10 floors
+    int windowsPerFloor = 2 + rand() % 3;  // 2 to 4 windows
+    float floorHeight = 0.8f + (rand() % 100) / 100.0f * 0.8f;
+    float buildingWidth = 1.0f + (rand() % (int) settings.buildingMaxWidth) / settings.buildingMaxWidth; // width is 0 - 100
+    float buildingDepth = 1.0f + (rand() % (int) settings.buildingMaxWidth) / settings.buildingMaxWidth;; // depth is 0 - 100
     m_numFloors = numFloors;
     m_windowsPerFloor = windowsPerFloor;
     m_floorHeight = floorHeight;
@@ -32,9 +32,9 @@ void Building::insertVec3(std::vector<float> &data, glm::vec3 pos, glm::vec3 nor
     data.push_back(pos.z);
 
     // normal
-    data.push_back(normal.x);
-    data.push_back(normal.y);
-    data.push_back(normal.z);
+    // data.push_back(normal.x);
+    // data.push_back(normal.y);
+    // data.push_back(normal.z);
 
     // color
     data.push_back(color.r);
