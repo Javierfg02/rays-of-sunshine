@@ -34,9 +34,9 @@ private:
     // Helper functions for building construction
     void setVertexData();
     void makeFace(glm::vec3 topLeft, glm::vec3 topRight,
-                  glm::vec3 bottomLeft, glm::vec3 bottomRight);
+                  glm::vec3 bottomLeft, glm::vec3 bottomRight, glm::vec3 normal);
     void addWindows();
-    void insertVec3(std::vector<float> &data, glm::vec3 pos, glm::vec3 normal, glm::vec3 color);
+    void insertVec3(glm::vec3 pos, glm::vec3 normal, glm::vec3 color);
 };
 
 #endif // BUILDING_H

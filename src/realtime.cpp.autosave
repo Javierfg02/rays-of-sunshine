@@ -252,7 +252,8 @@ void Realtime::setGlobalUniforms(GLuint shader) {
     glUniform1f(glGetUniformLocation(shader, "kd"), m_renderData.globalData.kd);
     glUniform1f(glGetUniformLocation(shader, "ks"), m_renderData.globalData.ks);
 
-    // we will only support one light currently (either the sun or the lantern), so set uniforms for that light
+    // we will only support one light currently (either the direcitonaor the spot), so set uniforms for that light
+    
 }
 
 

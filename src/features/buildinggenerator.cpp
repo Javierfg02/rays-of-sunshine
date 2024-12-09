@@ -31,7 +31,7 @@ std::vector<float> BuildingGenerator::initializeBuildings() {
             glm::vec3 position(xPos, 0.0f, zPos);
 
             // apply position to all vertices of this building
-            for(int i = 0; i < buildingData.size(); i += 6) {
+            for(int i = 0; i < buildingData.size(); i += 9) {
                 glm::vec4 pos(buildingData[i], buildingData[i+1], buildingData[i+2], 1.0f);
                 glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
                 pos = transform * pos;
@@ -41,10 +41,15 @@ std::vector<float> BuildingGenerator::initializeBuildings() {
                 vbo_data.push_back(pos.y);
                 vbo_data.push_back(pos.z);
 
-                // push color data
+                // push color data (offset by 3)
                 vbo_data.push_back(buildingData[i+3]);
                 vbo_data.push_back(buildingData[i+4]);
                 vbo_data.push_back(buildingData[i+5]);
+
+                // push normal data (offset by 6)
+                vbo_data.push_back(buildingData[i+6]);
+                vbo_data.push_back(buildingData[i+7]);
+                vbo_data.push_back(buildingData[i+8]);
             }
         }
     }
