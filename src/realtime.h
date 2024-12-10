@@ -93,10 +93,19 @@ private:
 
     // FBO
     void makeFBO();
-    void paintTexture(GLuint texture);
+    GLuint generateTexture(GLint internalFormat, GLint format, GLenum type);
+    void setupFramebuffer(GLuint &fbo, GLuint colorTexture, GLuint depthTexture);
+    void paintTexture();
+    void setupFullscreenQuad();
+    void renderFullscreenQuad();
 
-    GLuint m_fbo;
-    GLuint m_fbo_texture;
+    GLuint m_scene_fbo;
+    GLuint m_hblur_fbo;
+    GLuint m_vblur_fbo;
+    GLuint colorTexture;
+    GLuint depthTexture;
+    GLuint hblurTexture;
+    GLuint vblurTexture;
     GLuint m_fbo_renderbuffer;
     GLuint m_fullscreen_vbo;
     GLuint m_fullscreen_vao;

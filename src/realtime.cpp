@@ -113,14 +113,60 @@ void Realtime::initializeGL() {
     buildingShape.ctm = glm::mat4(1.0f);
     m_shapes.push_back(buildingShape);
 
-    // use the dof shader
+    // set up shaders
     GLuint dof_shader = m_shaderManager.getShader(ShaderManager::ShaderType::DEPTH_OF_FIELD);
     glUseProgram(dof_shader);
 
-    GLint textureLoc = glGetUniformLocation(dof_shader, "texture");
-    glUniform1i(textureLoc, 0);
+    GLint colorTextureLoc = glGetUniformLocation(dof_shader, "colorTexture");
+    glUniform1i(colorTextureLoc, 0);
+
+    GLint depthTextureLoc = glGetUniformLocation(dof_shader, "depthTexture");
+    glUniform1i(depthTextureLoc, 1);
+
     glUseProgram(0);
 
+    setupFullscreenQuad();
+
+    makeFBO();
+}
+
+void Realtime::paintGL() {
+    glBindFramebuffer(GL_FRAMEBUFFER, m_scene_fbo);
+    glViewport(0, 0, m_fbo_width, m_fbo_height);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // use the building shader
+    GLuint building_shader = m_shaderManager.getShader(ShaderManager::ShaderType::BUILDING);
+    glUseProgram(building_shader);
+
+    // send matrices to shader
+    glm::mat4 model = m_shapes[0].ctm;
+    glUniformMatrix4fv(glGetUniformLocation(building_shader, "modelMatrix"), 1, GL_FALSE, &model[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(building_shader, "viewMatrix"), 1, GL_FALSE, &m_view[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(building_shader, "projMatrix"), 1, GL_FALSE, &m_proj[0][0]);
+
+    // draw building
+    glBindVertexArray(m_vao); // vao will keep a reference to the vbo, so only need to bind vao
+    glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
+    glBindVertexArray(0);
+    glUseProgram(0);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
+    glViewport(0, 0, m_screen_width, m_screen_height);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // PAINT TEXTURE -----------------------------
+    paintTexture();
+    // paintTexture(depthTexture);
+}
+
+void Realtime::resizeGL(int w, int h) {
+    glViewport(0, 0, size().width() * m_devicePixelRatio, size().height() * m_devicePixelRatio);
+    m_aspect_ratio = static_cast<float>(w) / static_cast<float>(h);
+    m_proj = m_camera.getProjectionMatrix();
+}
+
+void Realtime::setupFullscreenQuad() {
     std::vector<GLfloat> fullscreen_quad_data =
         { //    POSITIONS    //    UV COORDS
             -1.0f, 1.0f,  0.0f,   0.0f, 1.0f,
@@ -147,100 +193,124 @@ void Realtime::initializeGL() {
     // unbind the fullscreen quad's VBO and VAO
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
-
-    makeFBO();
 }
 
-void Realtime::paintGL() {
-    glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
-    glViewport(0, 0, m_fbo_width, m_fbo_height);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    // use the building shader
-    GLuint building_shader = m_shaderManager.getShader(ShaderManager::ShaderType::BUILDING);
-    glUseProgram(building_shader);
-
-    // send matrices to shader
-    glm::mat4 model = m_shapes[0].ctm;
-    glUniformMatrix4fv(glGetUniformLocation(building_shader, "modelMatrix"), 1, GL_FALSE, &model[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(building_shader, "viewMatrix"), 1, GL_FALSE, &m_view[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(building_shader, "projMatrix"), 1, GL_FALSE, &m_proj[0][0]);
-
-    // draw building
-    glBindVertexArray(m_vao); // vao will keep a reference to the vbo, so only need to bind vao
-    glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
+void Realtime::renderFullscreenQuad() {
+    glBindVertexArray(m_fullscreen_vao);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     glBindVertexArray(0);
-    glUseProgram(0);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
-    glViewport(0, 0, m_screen_width, m_screen_height);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    // PAINT TEXTURE -----------------------------
-    paintTexture(m_fbo_texture);
-}
-
-void Realtime::resizeGL(int w, int h) {
-    glViewport(0, 0, size().width() * m_devicePixelRatio, size().height() * m_devicePixelRatio);
-    m_aspect_ratio = static_cast<float>(w) / static_cast<float>(h);
-    m_proj = m_camera.getProjectionMatrix();
 }
 
 void Realtime::makeFBO(){
-    // Task 19: Generate and bind an empty texture, set its min/mag filter interpolation, then unbind
-    glGenTextures(1, &m_fbo_texture);
+    // GENERAL SCENE FBO -----------------------------
+    colorTexture = generateTexture(GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE);
+    depthTexture = generateTexture(GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8);
+    setupFramebuffer(m_scene_fbo, colorTexture, depthTexture);
+
+    // HORIZONTAL BLUR FBO -----------------------------
+    hblurTexture = generateTexture(GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE);
+    setupFramebuffer(m_hblur_fbo, hblurTexture, 0);
+
+    // VERTCICAL BLUR FBO -----------------------------
+    vblurTexture = generateTexture(GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE);
+    setupFramebuffer(m_vblur_fbo, vblurTexture, 0);
+}
+
+void Realtime::paintTexture(){
+    // HORIZONTAL BLUR -----------------------------
+    glBindFramebuffer(GL_FRAMEBUFFER, m_hblur_fbo);
+    glViewport(0, 0, m_screen_width, m_screen_height);
+
+    GLuint hblur_shader = m_shaderManager.getShader(ShaderManager::ShaderType::HORIZONTAL_BLUR);
+    glUseProgram(hblur_shader);
+
+    GLint hblurTextureLoc = glGetUniformLocation(hblur_shader, "hblurTexture");
+    glUniform1i(hblurTextureLoc, 2); // maybe move idk
+    GLint uvChangeHLoc = glGetUniformLocation(hblur_shader, "uvChange");
+    glUniform2f(uvChangeHLoc, 1.0 / m_fbo_width, 0.0);
+
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, m_fbo_texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_fbo_width, m_fbo_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    glBindTexture(GL_TEXTURE_2D, colorTexture);
+    renderFullscreenQuad();
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glUseProgram(0);
+
+    // VERTICAL BLUR -----------------------------
+
+    glBindFramebuffer(GL_FRAMEBUFFER, m_vblur_fbo);
+    glViewport(0, 0, m_screen_width, m_screen_height);
+
+    GLuint vblur_shader = m_shaderManager.getShader(ShaderManager::ShaderType::VERTICAL_BLUR);
+    glUseProgram(vblur_shader);
+
+    GLint vblurTextureLoc = glGetUniformLocation(vblur_shader, "vblurTexture");
+    glUniform1i(vblurTextureLoc, 3); // maybe move
+    GLint uvChangeVLoc = glGetUniformLocation(vblur_shader, "uvChange");
+    glUniform2f(uvChangeVLoc, 0.0, 1.0 / m_fbo_height);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, hblurTexture);
+    renderFullscreenQuad();
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glUseProgram(0);
+
+    // DOF COMBINATION -----------------------------
+
+    glBindFramebuffer(GL_FRAMEBUFFER, m_scene_fbo);
+    glViewport(0, 0, m_screen_width, m_screen_height);
+
+    GLuint dof_shader = m_shaderManager.getShader(ShaderManager::ShaderType::DEPTH_OF_FIELD);
+    glUseProgram(dof_shader);
+
+    // bind vao, draw, unbind vao
+    // glBindVertexArray(m_fullscreen_vao);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, vblurTexture);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, depthTexture);
+
+    renderFullscreenQuad();
+    // glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
+    // glBindTexture(GL_TEXTURE_2D, 0);
+    // glBindVertexArray(0);
+
+    // glUseProgram(0);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glUseProgram(0);
+}
+
+GLuint Realtime::generateTexture(GLint internalFormat, GLint format, GLenum type) {
+    GLuint texture;
+    glGenTextures(1, &texture);
+    // state active texture? -- glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, m_fbo_width, m_fbo_height, 0, format, type, nullptr);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    // Task 20: Generate and bind a renderbuffer of the right size, set its format, then unbind
-    glGenRenderbuffers(1, &m_fbo_renderbuffer);
-    glBindRenderbuffer(GL_RENDERBUFFER, m_fbo_renderbuffer);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_fbo_width, m_fbo_height);
-    glBindRenderbuffer(GL_RENDERBUFFER, 0);
-
-    // Task 18: Generate and bind an FBO
-    glGenFramebuffers(1, &m_fbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
-
-    // Task 21: Add our texture as a color attachment, and our renderbuffer as a depth+stencil attachment, to our FBO
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_fbo_texture, 0);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_fbo_renderbuffer);
-
-    // Task 22: Unbind the FBO
-    glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
+    return texture;
 }
 
-void Realtime::paintTexture(GLuint texture){
-    // use the building shader
-    GLuint dof_shader = m_shaderManager.getShader(ShaderManager::ShaderType::DEPTH_OF_FIELD);
-    glUseProgram(dof_shader);
+void Realtime::setupFramebuffer(GLuint &fbo, GLuint colorTexture, GLuint depthTexture) {
+    glGenFramebuffers(1, &fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
-    // GLint kernelLoc = glGetUniformLocation(dof_shader, "kernel");
-    // std::vector<float> kernel = {
-    //     1.0, 1.0, 1.0, 1.0, 1.0,
-    //     1.0, 1.0, 1.0, 1.0, 1.0,
-    //     1.0, 1.0, 1.0, 1.0, 1.0,
-    //     1.0, 1.0, 1.0, 1.0, 1.0,
-    //     1.0, 1.0, 1.0, 1.0, 1.0
-    // };
-    // glUniform1fv(kernelLoc, 25, kernel.data());
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTexture, 0);
 
-    // GLint uvChangeLoc = glGetUniformLocation(dof_shader, "uvChange");
-    // glUniform2f(uvChangeLoc, 1.0 / m_fbo_width, 1.0 / m_fbo_height);
+    if (depthTexture) {
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
+    }
 
-    // bind vao, draw, unbind vao
-    glBindVertexArray(m_fullscreen_vao);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glBindVertexArray(0);
-
-    glUseProgram(0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void Realtime::sceneChanged() {

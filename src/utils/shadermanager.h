@@ -9,6 +9,8 @@ class ShaderManager {
 public:
     enum class ShaderType {
         BUILDING,
+        HORIZONTAL_BLUR,
+        VERTICAL_BLUR,
         DEPTH_OF_FIELD,
         CREPUSCULAR_RAYS,
         SKYBOX
@@ -33,6 +35,16 @@ public:
         createShaderProgram(ShaderType::BUILDING,
                             ":/resources/shaders/building.vert",
                             ":/resources/shaders/building.frag");
+
+        // Horizontal blur shader
+        createShaderProgram(ShaderType::HORIZONTAL_BLUR,
+                            ":/resources/shaders/hblur.vert",
+                            ":/resources/shaders/hblur.frag");
+
+        // Vertical blur shader
+        createShaderProgram(ShaderType::VERTICAL_BLUR,
+                            ":/resources/shaders/vblur.vert",
+                            ":/resources/shaders/vblur.frag");
 
         // Depth of field shader
         createShaderProgram(ShaderType::DEPTH_OF_FIELD,
