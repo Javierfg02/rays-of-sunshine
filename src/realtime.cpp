@@ -211,7 +211,7 @@ void Realtime::renderFullscreenQuad() {
 void Realtime::makeFBO(){
     // HORIZONTAL BLUR FBO -----------------------------
     generateTexture(hblurTexture, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE);
-    setupFramebuffer(m_hblur_fbo, colorTexture, 0);
+    // setupFramebuffer(m_hblur_fbo, colorTexture, 0);
 
     // VERTCICAL BLUR FBO -----------------------------
     generateTexture(vblurTexture, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE);
@@ -257,8 +257,8 @@ void Realtime::paintTextures(){
     glUseProgram(0);
 
     // DOF COMBINATION -----------------------------
-    // glBindFramebuffer(GL_FRAMEBUFFER, m_scene_fbo);
-    // glViewport(0, 0, m_fbo_width, m_fbo_height);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_scene_fbo);
+    glViewport(0, 0, m_fbo_width, m_fbo_height);
     glUseProgram(m_shaderManager.dof_shader);
 
     glActiveTexture(GL_TEXTURE0);
@@ -276,7 +276,7 @@ void Realtime::paintTextures(){
     glBindTexture(GL_TEXTURE_2D, 0);
     glActiveTexture(GL_TEXTURE3);
     glBindTexture(GL_TEXTURE_2D, 0);
-    // glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glUseProgram(0);
 }
 
