@@ -72,6 +72,14 @@ void Realtime::initializeGL() {
     BuildingGenerator* buildingGenerator = new BuildingGenerator();
     allBuildingData = buildingGenerator->initializeBuildings();
 
+    // clear any existing lights
+    m_renderData.lights.clear();
+
+    // set default global illumination coefficients
+    m_renderData.globalData.ka = 0.1f;  // low ambient for dark night scene
+    m_renderData.globalData.kd = 0.7f;  // diffuse
+    m_renderData.globalData.ks = 0.5f;  // specular
+
     // set camera to road
     glm::vec3 roadPos = buildingGenerator->getRandomRoadPosition();
     // position camera at start of road, looking down it
@@ -119,39 +127,39 @@ void Realtime::initializeGL() {
     m_shapes.push_back(buildingShape);
 
     // use the dof shader
-    GLuint dof_shader = m_shaderManager.getShader(ShaderManager::ShaderType::DEPTH_OF_FIELD);
-    glUseProgram(dof_shader);
+    // GLuint dof_shader = m_shaderManager.getShader(ShaderManager::ShaderType::DEPTH_OF_FIELD);
+    // glUseProgram(dof_shader);
 
-    GLint textureLoc = glGetUniformLocation(dof_shader, "texture");
-    glUniform1i(textureLoc, 0);
-    glUseProgram(0);
+    // GLint textureLoc = glGetUniformLocation(dof_shader, "texture");
+    // glUniform1i(textureLoc, 0);
+    // glUseProgram(0);
 
-    std::vector<GLfloat> fullscreen_quad_data =
-        { //    POSITIONS    //    UV COORDS
-            -1.0f, 1.0f,  0.0f,   0.0f, 1.0f,
-            -1.0f, -1.0f, 0.0f,   0.0f, 0.0f,
-            1.0f,  -1.0f, 0.0f,   1.0f, 0.0f,
-            1.0f,  1.0f,  0.0f,   1.0f, 1.0f,
-            -1.0f, 1.0f,  0.0f,   0.0f, 1.0f,
-            1.0f,  -1.0f, 0.0f,   1.0f, 0.0f
-        };
+    // std::vector<GLfloat> fullscreen_quad_data =
+    //     { //    POSITIONS    //    UV COORDS
+    //         -1.0f, 1.0f,  0.0f,   0.0f, 1.0f,
+    //         -1.0f, -1.0f, 0.0f,   0.0f, 0.0f,
+    //         1.0f,  -1.0f, 0.0f,   1.0f, 0.0f,
+    //         1.0f,  1.0f,  0.0f,   1.0f, 1.0f,
+    //         -1.0f, 1.0f,  0.0f,   0.0f, 1.0f,
+    //         1.0f,  -1.0f, 0.0f,   1.0f, 0.0f
+    //     };
 
-    // generate and bind a VBO and a VAO for a fullscreen quad
-    glGenBuffers(1, &m_fullscreen_vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, m_fullscreen_vbo);
-    glBufferData(GL_ARRAY_BUFFER, fullscreen_quad_data.size() * sizeof(GLfloat), fullscreen_quad_data.data(), GL_STATIC_DRAW);
-    glGenVertexArrays(1, &m_fullscreen_vao);
-    glBindVertexArray(m_fullscreen_vao);
+    // // generate and bind a VBO and a VAO for a fullscreen quad
+    // glGenBuffers(1, &m_fullscreen_vbo);
+    // glBindBuffer(GL_ARRAY_BUFFER, m_fullscreen_vbo);
+    // glBufferData(GL_ARRAY_BUFFER, fullscreen_quad_data.size() * sizeof(GLfloat), fullscreen_quad_data.data(), GL_STATIC_DRAW);
+    // glGenVertexArrays(1, &m_fullscreen_vao);
+    // glBindVertexArray(m_fullscreen_vao);
 
-    // define vao attributes
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), reinterpret_cast<void *>(0));
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), reinterpret_cast<void *>(3 * sizeof(GLfloat)));
+    // // define vao attributes
+    // glEnableVertexAttribArray(0);
+    // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), reinterpret_cast<void *>(0));
+    // glEnableVertexAttribArray(1);
+    // glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), reinterpret_cast<void *>(3 * sizeof(GLfloat)));
 
-    // unbind the fullscreen quad's VBO and VAO
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
+    // // unbind the fullscreen quad's VBO and VAO
+    // glBindBuffer(GL_ARRAY_BUFFER, 0);
+    // glBindVertexArray(0);
 
     // makeFBO();
 }
@@ -164,9 +172,17 @@ void Realtime::paintGL() {
     // use the building shader
     GLuint building_shader = m_shaderManager.getShader(ShaderManager::ShaderType::BUILDING);
     glUseProgram(building_shader);
+    GLenum error = glGetError();
+    if(error != GL_NO_ERROR) {
+        std::cout << "OpenGL error after glUseProgram: " << error << std::endl;
+    }
+
+    // update spot light
+    this->updateSpotLight();
+
 
     // set global uniforms
-    this->setGlobalUniforms();
+    this->setGlobalUniforms(building_shader);
 
     // draw building
     glBindVertexArray(m_vao); // vao will keep a reference to the vbo, so only need to bind vao
@@ -239,20 +255,84 @@ void Realtime::paintTexture(GLuint texture){
     glUseProgram(0);
 }
 
+void Realtime::updateSpotLight() {
+    m_renderData.lights.clear();
+
+    // Create a spotlight that follows the camera
+    SceneLightData spotlight;
+    spotlight.id = 0;
+    spotlight.type = LightType::LIGHT_SPOT;
+    spotlight.color = glm::vec4(1.5f, 1.5f, 1.35f, 1.0f);  // 50% brighter
+        spotlight.pos = m_camera.getPos();  // light position is camera position - acts as a lantern
+    spotlight.dir = m_camera.getLook();  // light direction is camera look direction
+    spotlight.function = glm::vec3(0.0f, 0.05f, 0.02f); // attenuation function
+    spotlight.angle = 0.5f;  // 30 degrees
+    spotlight.penumbra = 0.2f;
+    m_renderData.lights.push_back(spotlight);
+}
+
 void Realtime::setGlobalUniforms(GLuint shader) {
-    // Uniforms - variables that are constant for all vertices and fragments
-    // send matrices to shader
+    // Send camera position for specular calculations
+    glm::vec3 cameraPos = glm::vec3(m_camera.getPos());
+    glUniform3fv(glGetUniformLocation(shader, "cameraPos"), 1, &cameraPos[0]);
+
+    // Send matrices
     glm::mat4 model = m_shapes[0].ctm;
     glUniformMatrix4fv(glGetUniformLocation(shader, "modelMatrix"), 1, GL_FALSE, &model[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(shader, "viewMatrix"), 1, GL_FALSE, &m_view[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(shader, "projMatrix"), 1, GL_FALSE, &m_proj[0][0]);
 
-    // lighting constants
+    // Send lighting coefficients
     glUniform1f(glGetUniformLocation(shader, "ka"), m_renderData.globalData.ka);
     glUniform1f(glGetUniformLocation(shader, "kd"), m_renderData.globalData.kd);
     glUniform1f(glGetUniformLocation(shader, "ks"), m_renderData.globalData.ks);
 
-    // we will only support one light currently (either the sun or the lantern), so set uniforms for that light
+    // Send light data
+    int numLights = m_renderData.lights.size();
+    glUniform1i(glGetUniformLocation(shader, "numLights"), numLights);
+
+    for (int i = 0; i < numLights; i++) {
+        std::string prefix = "lights[" + std::to_string(i) + "].";
+        SceneLightData light = m_renderData.lights[i];
+
+        glUniform1i(glGetUniformLocation(shader, (prefix + "type").c_str()),
+                    static_cast<int>(light.type));
+        glUniform3fv(glGetUniformLocation(shader, (prefix + "color").c_str()),
+                     1, &light.color[0]);
+        glUniform3fv(glGetUniformLocation(shader, (prefix + "function").c_str()),
+                     1, &light.function[0]);
+
+        if (light.type != LightType::LIGHT_DIRECTIONAL) {
+            glUniform4fv(glGetUniformLocation(shader, (prefix + "pos").c_str()),
+                         1, &light.pos[0]);
+        }
+
+        if (light.type != LightType::LIGHT_POINT) {
+            glUniform4fv(glGetUniformLocation(shader, (prefix + "dir").c_str()),
+                         1, &light.dir[0]);
+        }
+
+        if (light.type == LightType::LIGHT_SPOT) {
+            glUniform1f(glGetUniformLocation(shader, (prefix + "penumbra").c_str()),
+                        light.penumbra);
+            glUniform1f(glGetUniformLocation(shader, (prefix + "angle").c_str()),
+                        light.angle);
+        }
+    }
+
+    // set base material properties
+    SceneMaterial material = {
+        glm::vec4(0.2f), // ambient
+        glm::vec4(0.7f), // diffuse
+        glm::vec4(0.3f), // specular
+        32.0f,           // shininess
+        glm::vec4(0.1f)  // reflective
+    };
+
+    glUniform3fv(glGetUniformLocation(shader, "material.ambient"), 1, &material.cAmbient[0]);
+    glUniform3fv(glGetUniformLocation(shader, "material.diffuse"), 1, &material.cDiffuse[0]);
+    glUniform3fv(glGetUniformLocation(shader, "material.specular"), 1, &material.cSpecular[0]);
+    glUniform1f(glGetUniformLocation(shader, "material.shininess"), material.shininess);
 }
 
 

@@ -41,12 +41,12 @@ std::vector<float> BuildingGenerator::initializeBuildings() {
                 vbo_data.push_back(pos.y);
                 vbo_data.push_back(pos.z);
 
-                // push color data (offset by 3)
+                // push normal data (offset by 3)
                 vbo_data.push_back(buildingData[i+3]);
                 vbo_data.push_back(buildingData[i+4]);
                 vbo_data.push_back(buildingData[i+5]);
 
-                // push normal data (offset by 6)
+                // push color data (offset by 6)
                 vbo_data.push_back(buildingData[i+6]);
                 vbo_data.push_back(buildingData[i+7]);
                 vbo_data.push_back(buildingData[i+8]);
@@ -114,8 +114,7 @@ void BuildingGenerator::generateGrid() {
 glm::vec3 BuildingGenerator::getRandomRoadPosition() {
     int gridSize = this->citySize / settings.buildingMaxWidth;
 
-    // Always return a position on the middle road, at the edge
-    float xPos = 0; // Start of the road
+    float xPos = 0; // start of the road
     float zPos = (gridSize / 2) * settings.buildingMaxWidth;
     return glm::vec3(xPos, 0.0f, zPos);
 }

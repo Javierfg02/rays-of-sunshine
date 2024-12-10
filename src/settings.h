@@ -17,7 +17,7 @@ struct Settings {
     // scene data
     int width = 0;
     int height = 0;
-    glm::vec4 backgroundColor = glm::vec4(0.1f, 0.2f, 0.3f, 1.0f);
+    glm::vec4 backgroundColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
     // buildings
     int numBuildings = 20;

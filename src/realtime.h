@@ -47,6 +47,7 @@ private:
 
     // Phong
     void setGlobalUniforms(GLuint shader);
+    void updateSpotLight();
 
     // Tick Related Variables
     int m_timer;                                        // Stores timer which attempts to run ~60 times per second
@@ -103,11 +104,9 @@ private:
     GLuint m_fbo_renderbuffer;
     GLuint m_fullscreen_vbo;
     GLuint m_fullscreen_vao;
-
     GLuint m_defaultFBO;
     int m_fbo_width;
     int m_fbo_height;
     int m_screen_width;
     int m_screen_height;
-
 };
