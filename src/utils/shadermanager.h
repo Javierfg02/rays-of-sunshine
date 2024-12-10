@@ -30,24 +30,30 @@ public:
         return instance;
     }
 
+    // shaders
+    GLuint dof_shader;
+    GLuint building_shader;
+    GLuint hblur_shader;
+    GLuint vblur_shader;
+
     void initializeShaders() {
         // Buildings shader
-        createShaderProgram(ShaderType::BUILDING,
+        building_shader = createShaderProgram(ShaderType::BUILDING,
                             ":/resources/shaders/building.vert",
                             ":/resources/shaders/building.frag");
 
         // Horizontal blur shader
-        createShaderProgram(ShaderType::HORIZONTAL_BLUR,
+        hblur_shader = createShaderProgram(ShaderType::HORIZONTAL_BLUR,
                             ":/resources/shaders/hblur.vert",
                             ":/resources/shaders/hblur.frag");
 
         // Vertical blur shader
-        createShaderProgram(ShaderType::VERTICAL_BLUR,
+        vblur_shader = createShaderProgram(ShaderType::VERTICAL_BLUR,
                             ":/resources/shaders/vblur.vert",
                             ":/resources/shaders/vblur.frag");
 
         // Depth of field shader
-        createShaderProgram(ShaderType::DEPTH_OF_FIELD,
+        dof_shader = createShaderProgram(ShaderType::DEPTH_OF_FIELD,
                             ":/resources/shaders/dof.vert",
                             ":/resources/shaders/dof.frag");
 
@@ -81,7 +87,7 @@ private:
     // using custom hash function for the enum class
     std::unordered_map<ShaderType, GLuint, ShaderTypeHash> m_shaderPrograms;
 
-    void createShaderProgram(ShaderType type, const char * vertPath, const char * fragPath) {
-        m_shaderPrograms[type] = ShaderLoader::createShaderProgram(vertPath, fragPath);
+    GLuint createShaderProgram(ShaderType type, const char * vertPath, const char * fragPath) {
+        return m_shaderPrograms[type] = ShaderLoader::createShaderProgram(vertPath, fragPath);
     }
 };
