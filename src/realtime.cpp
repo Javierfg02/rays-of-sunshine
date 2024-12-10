@@ -76,9 +76,9 @@ void Realtime::initializeGL() {
     m_renderData.lights.clear();
 
     // set default global illumination coefficients
-    m_renderData.globalData.ka = 0.1f;  // low ambient for dark night scene
-    m_renderData.globalData.kd = 0.7f;  // diffuse
-    m_renderData.globalData.ks = 0.5f;  // specular
+    m_renderData.globalData.ka = settings.ka;  // low ambient for dark night scene
+    m_renderData.globalData.kd = settings.kd;  // diffuse
+    m_renderData.globalData.ks = settings.ks;  // specular
 
     // set camera to road
     glm::vec3 roadPos = buildingGenerator->getRandomRoadPosition();
@@ -180,7 +180,6 @@ void Realtime::paintGL() {
     // update spot light
     this->updateSpotLight();
 
-
     // set global uniforms
     this->setGlobalUniforms(building_shader);
 
@@ -262,7 +261,7 @@ void Realtime::updateSpotLight() {
     SceneLightData spotlight;
     spotlight.id = 0;
     spotlight.type = LightType::LIGHT_SPOT;
-    spotlight.color = glm::vec4(1.5f, 1.5f, 1.35f, 1.0f);  // 50% brighter
+    spotlight.color = settings.spotColor;  // 50% brighter
         spotlight.pos = m_camera.getPos();  // light position is camera position - acts as a lantern
     spotlight.dir = m_camera.getLook();  // light direction is camera look direction
     spotlight.function = glm::vec3(0.0f, 0.05f, 0.02f); // attenuation function

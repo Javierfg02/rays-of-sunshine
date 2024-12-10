@@ -31,8 +31,9 @@ std::vector<float> BuildingGenerator::initializeBuildings() {
             glm::vec3 position(xPos, 0.0f, zPos);
 
             // apply position to all vertices of this building
+            float rndPosOffset = (rand() % 4) - 4/2.f; // add some randomness to the x and y positions of buildings
             for(int i = 0; i < buildingData.size(); i += 9) {
-                glm::vec4 pos(buildingData[i], buildingData[i+1], buildingData[i+2], 1.0f);
+                glm::vec4 pos(buildingData[i] + rndPosOffset, buildingData[i+1], buildingData[i+2] + rndPosOffset, 1.0f);
                 glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
                 pos = transform * pos;
 
@@ -117,4 +118,18 @@ glm::vec3 BuildingGenerator::getRandomRoadPosition() {
     float xPos = 0; // start of the road
     float zPos = (gridSize / 2) * settings.buildingMaxWidth;
     return glm::vec3(xPos, 0.0f, zPos);
+}
+
+glm::mat4 BuildingGenerator::getRandomRotatedTransform(float x, float z) {
+    // Random rotation between -5 and 5 degrees
+    float randomAngle = (((float)rand() / RAND_MAX) * 10.0f - 5.0f) * (M_PI / 180.0f);
+
+    // First translate to position
+    glm::mat4 translation = glm::translate(glm::mat4(1.0f), glm::vec3(x, 0.0f, z));
+
+    // Then rotate around Y axis
+    glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), randomAngle, glm::vec3(0.0f, 1.0f, 0.0f));
+
+    // Combine transformations: translation * rotation
+    return translation * rotation;
 }

@@ -123,7 +123,7 @@ void Building::addWindows() {
     float windowWidth = settings.windowWidth;
     float windowHeight = settings.windowHeight;
     glm::vec3 regularWindowColor = settings.windowColor;
-    glm::vec3 litWindowColor = glm::vec3(2.0f, 1.9f, 1.4f);  // Very bright warm color for lit windows
+    glm::vec3 litWindowColor = glm::vec3(2.0f, 1.9f, 1.4f);
 
     // Space windows evenly across the front face
     float spacing = m_buildingWidth / (m_windowsPerFloor + 1);
@@ -134,10 +134,10 @@ void Building::addWindows() {
 
         for (int window = 0; window < m_windowsPerFloor; window++) {
             float windowX = -m_buildingWidth/2 + spacing * (window + 1);
-            float windowY = floorBase + 0.5f;
+            float windowY = floorBase + 0.25f;
 
             // Determine if window should be lit
-            bool isLit = (rand() % 100) < 30;  // 30% chance of being lit
+            bool isLit = (rand() % 100) < 15;  // 30% chance of being lit
             glm::vec3 windowColor = isLit ? litWindowColor : regularWindowColor;
 
             // Front face windows
@@ -168,6 +168,37 @@ void Building::addWindows() {
             insertVec3(backTopLeft, backNormal, windowColor);
             insertVec3(backBottomRight, backNormal, windowColor);
             insertVec3(backBottomLeft, backNormal, windowColor);
+
+            // left face windows
+            float zSpacing = m_buildingDepth / (m_windowsPerFloor + 1);
+
+            // Left face windows
+            glm::vec3 leftTopLeft(-m_buildingWidth/2 - 0.01f, windowY + windowHeight, -m_buildingDepth/2 + zSpacing * (window + 1));
+            glm::vec3 leftTopRight(-m_buildingWidth/2 - 0.01f, windowY + windowHeight, -m_buildingDepth/2 + zSpacing * (window + 1) + windowWidth);
+            glm::vec3 leftBottomLeft(-m_buildingWidth/2 - 0.01f, windowY, -m_buildingDepth/2 + zSpacing * (window + 1));
+            glm::vec3 leftBottomRight(-m_buildingWidth/2 - 0.01f, windowY, -m_buildingDepth/2 + zSpacing * (window + 1) + windowWidth);
+            glm::vec3 leftNormal(-1, 0, 0);
+
+            insertVec3(leftTopLeft, leftNormal, windowColor);
+            insertVec3(leftBottomLeft, leftNormal, windowColor);
+            insertVec3(leftTopRight, leftNormal, windowColor);
+            insertVec3(leftTopRight, leftNormal, windowColor);
+            insertVec3(leftBottomLeft, leftNormal, windowColor);
+            insertVec3(leftBottomRight, leftNormal, windowColor);
+
+            // right face windows
+            glm::vec3 rightTopLeft(m_buildingWidth/2 + 0.01f, windowY + windowHeight, -m_buildingDepth/2 + zSpacing * (window + 1));
+            glm::vec3 rightTopRight(m_buildingWidth/2 + 0.01f, windowY + windowHeight, -m_buildingDepth/2 + zSpacing * (window + 1) + windowWidth);
+            glm::vec3 rightBottomLeft(m_buildingWidth/2 + 0.01f, windowY, -m_buildingDepth/2 + zSpacing * (window + 1));
+            glm::vec3 rightBottomRight(m_buildingWidth/2 + 0.01f, windowY, -m_buildingDepth/2 + zSpacing * (window + 1) + windowWidth);
+            glm::vec3 rightNormal(1, 0, 0);
+
+            insertVec3(rightTopRight, rightNormal, windowColor);
+            insertVec3(rightBottomRight, rightNormal, windowColor);
+            insertVec3(rightTopLeft, rightNormal, windowColor);
+            insertVec3(rightTopLeft, rightNormal, windowColor);
+            insertVec3(rightBottomRight, rightNormal, windowColor);
+            insertVec3(rightBottomLeft, rightNormal, windowColor);
         }
     }
 }

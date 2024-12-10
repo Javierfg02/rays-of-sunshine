@@ -33,6 +33,8 @@ public:
 private:
     float citySize;
     std::vector<GridCell> m_grid;
+
+    glm::mat4 getRandomRotatedTransform(float x, float z);
 };
 
 #endif // BUILDINGGENERATOR_H

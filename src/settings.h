@@ -20,14 +20,11 @@ struct Settings {
     glm::vec4 backgroundColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
     // buildings
-    int numBuildings = 20;
-    float buildingSpacing = 1.0f;
-
-    // building
-    float buildingMaxWidth = 5.f;
+    float buildingSpacing = .5f;
+    float buildingMaxWidth = 3.5f;
     float windowWidth = 0.2f;
     float windowHeight = 0.3f;
-    glm::vec3 windowColor = glm::vec3(255.f/255.f, 197.f/255.f, 143.f/255.f);
+    glm::vec3 windowColor = glm::vec3(305.f/255.f, 235.f/255.f, 122.f/255.f);
     glm::vec3 wallColor = glm::vec3(0.4f, 0.4f, 0.4f);
 
     // gravity
@@ -41,6 +38,14 @@ struct Settings {
     float cameraPitchMax = 30.0f;
     float cameraYawMin = 30.0f;
     float cameraYawMax = 150.0f;
+
+    // global lighting
+    float ka = 0.f;
+    float kd = 0.7f;
+    float ks = 0.5f;
+
+    // spot light
+    glm::vec4 spotColor = glm::vec4(255.f/255.f, 214.f/255.f, 170.f/255.f, 1.0f);
 
     // bezier
     float baseHeight = 2.0f;
