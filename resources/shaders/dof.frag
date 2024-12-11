@@ -49,7 +49,7 @@ void main() {
     // blend original and blurred color
     vec3 finalColor = mix(originalColor, blurredColor.rgb, blurFactor);
 
-    fragColor = vec4(finalColor, 1.0) * 0.13;
+    fragColor = vec4(finalColor, 1.0) * 0.11;
 
     // fragColor = texture(colorTexture, uv_coord);
 }
