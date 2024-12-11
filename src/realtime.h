@@ -104,11 +104,22 @@ private:
 
     // FBO
     void makeFBO();
-    void paintTexture(GLuint texture);
+    void generateTexture(GLuint &texture, GLint internalFormat, GLint format, GLenum type);
+    void setupFramebuffer(GLuint &fbo, GLuint colorTexture, GLuint depthTexture);
+    void paintTextures();
+    void setupFullscreenQuad();
+    void renderFullscreenQuad();
 
+    // GLuint m_buildings_fbo;
+    // GLuint m_hblur_fbo;
+    // GLuint m_vblur_fbo;
+    // GLuint m_dof_fbo;
     GLuint m_fbo;
-    GLuint m_fbo_texture;
-    GLuint m_fbo_renderbuffer;
+
+    GLuint colorTexture;
+    GLuint depthTexture;
+    GLuint hblurTexture;
+    GLuint vblurTexture;
     GLuint m_fullscreen_vbo;
     GLuint m_fullscreen_vao;
     GLuint m_defaultFBO;
