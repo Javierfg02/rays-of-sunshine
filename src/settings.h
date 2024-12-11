@@ -17,7 +17,7 @@ struct Settings {
     // scene data
     int width = 0;
     int height = 0;
-    glm::vec4 backgroundColor = glm::vec4(0.f, 0.f, 0.f, 1.0f);
+    glm::vec4 backgroundColor = glm::vec4(0.f, 0.f, 12.0f/255.0f, 1.0f);
 
     // buildings
     float buildingSpacing = .1f;
