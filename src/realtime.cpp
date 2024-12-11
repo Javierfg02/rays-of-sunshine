@@ -61,6 +61,7 @@ void Realtime::initializeGL() {
     }
 
     glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
     glEnable(GL_CULL_FACE);
     glViewport(0, 0, size().width() * m_devicePixelRatio, size().height() * m_devicePixelRatio);
     glClearColor(settings.backgroundColor[0], settings.backgroundColor[1], settings.backgroundColor[2], settings.backgroundColor[3]);
@@ -220,11 +221,84 @@ void Realtime::renderFullscreenQuad() {
   glBindVertexArray(0);
 }
 
+// void Realtime::paintGL() {
+
+//     // bind fbo
+//     glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+//     glViewport(0, 0, m_fbo_width, m_fbo_height);
+//     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//     glEnable(GL_DEPTH_TEST);
+//     glDepthFunc(GL_LESS);
+//     glEnable(GL_CULL_FACE);
+
+//     // use the building shader
+//     glUseProgram(m_shaderManager.building_shader);
+
+//     // update spot light
+//     this->updateSpotLight();
+
+//     // set global uniforms
+//     this->setGlobalUniforms(m_shaderManager.building_shader);
+
+//     // draw buildings
+//     glBindVertexArray(m_vao);
+//     glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
+//     glBindVertexArray(0);
+
+//     // draw road - reapply uniforms to be safe
+//     this->setGlobalUniforms(m_shaderManager.building_shader);
+
+//     // Set specific material properties for road
+//     // SceneMaterial roadMaterial = {
+//     //     glm::vec4(0.2f),       // ambient
+//     //     glm::vec4(0.5f),       // diffuse - darker than buildings
+//     //     glm::vec4(0.1f),       // less specular than buildings
+//     //     16.0f,                 // less shiny
+//     //     glm::vec4(1.0f)        // reflective
+//     // };
+//     SceneMaterial roadMaterial = {
+//         glm::vec4(1.0f),       // max ambient
+//         glm::vec4(1.0f),       // max diffuse
+//         glm::vec4(1.0f),       // max specular
+//         1.0f,                  // low shininess
+//         glm::vec4(1.0f)        // reflective
+//     };
+
+//     // std::cout << "Drawing road with material:" << std::endl;
+//     // std::cout << "Ambient: " << roadMaterial.cAmbient.x << std::endl;
+//     // std::cout << "Diffuse: " << roadMaterial.cDiffuse.x << std::endl;
+//     // std::cout << "Vertex count: " << m_roadVertexCount << std::endl;
+
+//     glUniform3fv(glGetUniformLocation(m_shaderManager.building_shader, "material.ambient"), 1, &roadMaterial.cAmbient[0]);
+//     glUniform3fv(glGetUniformLocation(m_shaderManager.building_shader, "material.diffuse"), 1, &roadMaterial.cDiffuse[0]);
+//     glUniform3fv(glGetUniformLocation(m_shaderManager.building_shader, "material.specular"), 1, &roadMaterial.cSpecular[0]);
+//     glUniform1f(glGetUniformLocation(m_shaderManager.building_shader, "material.shininess"), roadMaterial.shininess);
+
+//     // // draw road
+//     // glBindVertexArray(m_road_vao);
+//     // glDrawArrays(GL_TRIANGLES, 0, m_roadVertexCount);
+//     // glBindVertexArray(0);
+//     // std::cout << "Drawing road with " << m_roadVertexCount << " vertices" << std::endl;
+
+//     glUseProgram(0);
+
+//     // unbind fbo
+//     glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
+//     glViewport(0, 0, m_screen_width, m_screen_height);
+//     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+//     // paint textures
+//     paintTextures();
+// }
+
 void Realtime::paintGL() {
     // bind fbo
     glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
     glViewport(0, 0, m_fbo_width, m_fbo_height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+    glEnable(GL_CULL_FACE);
 
     // use the building shader
     glUseProgram(m_shaderManager.building_shader);
@@ -261,7 +335,6 @@ void Realtime::paintGL() {
     glBindVertexArray(m_road_vao);
     glDrawArrays(GL_TRIANGLES, 0, m_roadVertexCount);
     glBindVertexArray(0);
-    std::cout << "Drawing road with " << m_roadVertexCount << " vertices" << std::endl;
 
     glUseProgram(0);
 
