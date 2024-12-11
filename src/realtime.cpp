@@ -518,9 +518,9 @@ void Realtime::timerEvent(QTimerEvent *event) {
 
     // sprint
     if(m_keyMap[Qt::Key_Shift]) {
-        settings.moveSpeed = 5.0f;
+        settings.moveSpeed = settings.sprintSpeed;
     } else {
-        settings.moveSpeed = 2.5f;
+        settings.moveSpeed = 1.0f;
     }
 
     m_wasWalking = isWalking;
