@@ -122,7 +122,7 @@ glm::vec3 BuildingGenerator::getRandomRoadPosition() {
 
 std::vector<float> BuildingGenerator::getRoadData() {
     m_roadVertexData.clear();
-    generateRoad();
+    this->generateRoad();
     return m_roadVertexData;
 }
 
@@ -130,11 +130,11 @@ std::vector<float> BuildingGenerator::generateRoad() {
     std::vector<float> roadVertexData;
 
     float roadWidth = 4.0f;
-    float roadHeight = 0.1f;
-    float totalLength = settings.buildingMaxWidth * 20;
+    float roadHeight = 1.f;
+    float totalLength = settings.buildingMaxWidth * 100;
 
     // Road surface
-    glm::vec3 roadColor(0.3f, 0.3f, 0.3f);
+    glm::vec3 roadColor(1.f, 1.f, 1.f);
     glm::vec3 upNormal(0.0f, 1.0f, 0.0f);
 
     // Main road surface
@@ -147,8 +147,8 @@ std::vector<float> BuildingGenerator::generateRoad() {
         roadColor);
 
     // Center line
-    float lineWidth = 0.1f;
-    float lineHeight = roadHeight + 0.001f;
+    float lineWidth = 0.5f;
+    float lineHeight = roadHeight + 0.01f;
     glm::vec3 lineColor(0.9f, 0.9f, 0.7f);
 
     addQuad(
@@ -157,11 +157,10 @@ std::vector<float> BuildingGenerator::generateRoad() {
         glm::vec3(-lineWidth/2, lineHeight, totalLength),
         glm::vec3(lineWidth/2, lineHeight, totalLength),
         upNormal,
-        lineColor
-        );
+        lineColor);
 
-    // Side curbs
-    float curbHeight = 0.1f;
+    // side curbs
+    float curbHeight = 1.1f;
     glm::vec3 curbColor(0.3f, 0.3f, 0.3f);
 
     // Left curb
@@ -171,8 +170,7 @@ std::vector<float> BuildingGenerator::generateRoad() {
         glm::vec3(-roadWidth-0.2f, 0.0f, totalLength),
         glm::vec3(-roadWidth, curbHeight, totalLength),
         glm::normalize(glm::vec3(1.0f, 1.0f, 0.0f)),
-        curbColor
-        );
+        curbColor);
 
     // Right curb
     addQuad(
@@ -181,14 +179,12 @@ std::vector<float> BuildingGenerator::generateRoad() {
         glm::vec3(roadWidth, curbHeight, totalLength),
         glm::vec3(roadWidth+0.2f, 0.0f, totalLength),
         glm::normalize(glm::vec3(-1.0f, 1.0f, 0.0f)),
-        curbColor
-        );
+        curbColor);
 
     return roadVertexData;
 }
 
-void BuildingGenerator::addQuad(
-    glm::vec3 bl, glm::vec3 br, glm::vec3 tl, glm::vec3 tr,
+void BuildingGenerator::addQuad(glm::vec3 bl, glm::vec3 br, glm::vec3 tl, glm::vec3 tr,
     glm::vec3 normal, glm::vec3 color) {
 
     // First triangle (bl, br, tr)

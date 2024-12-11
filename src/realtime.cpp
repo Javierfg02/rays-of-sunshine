@@ -226,14 +226,7 @@ void Realtime::paintGL() {
 
     // After drawing buildings
     glBindVertexArray(m_road_vao);
-    // Add debug check
-    GLenum err = glGetError();
-    if(err != GL_NO_ERROR) {
-        std::cout << "OpenGL error before road draw: " << err << std::endl;
-    }
     glDrawArrays(GL_TRIANGLES, 0, m_roadVertexCount);
-    std::cout << "Drawing road with " << m_roadVertexCount << " vertices" << std::endl;
-    glBindVertexArray(0);
     glBindVertexArray(0);
     glUseProgram(0);
 
@@ -373,7 +366,7 @@ void Realtime::setGlobalUniforms(GLuint shader) {
         glm::vec4(0.7f), // diffuse
         glm::vec4(0.3f), // specular
         32.0f,           // shininess
-        glm::vec4(0.1f)  // reflective
+        glm::vec4(1.1f)  // reflective
     };
 
     glUniform3fv(glGetUniformLocation(shader, "material.ambient"), 1, &material.cAmbient[0]);

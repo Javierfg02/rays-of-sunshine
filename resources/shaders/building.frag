@@ -72,7 +72,7 @@ vec3 calculateLight(Light light, vec3 normal, vec3 cameraDir) {
         if (theta > thetaOuter) {
             if (isWindow) {
                 // keep lit windows visible even in darkness
-                return col * 0.3;
+                return col * 0.15;
             }
             return vec3(0.0);
         }
@@ -101,22 +101,20 @@ vec3 calculateLight(Light light, vec3 normal, vec3 cameraDir) {
 
     vec3 result;
     if (isWindow) {
-        // Enhanced lighting for windows
-        ambient *= 2.0; // brighter ambient
-        specular *= 3.0; // stronger specular
+        ambient *= 1.5; // brighter ambient
+        specular *= 2.0; // stronger specular
 
-        // Add emissive component for lit windows
-        vec3 emissive = col * 0.5;  // Base glow from the window
+        // add emissive component for lit windows
+        vec3 emissive = col * 0.3;  // base glow from the window
 
         result = ambient + attenuation * (diffuse + specular) + emissive;
-        return max(result, col * 0.3);  // Ensure windows never go completely dark
+        return max(result, col * 0.15);  // ensure windows never go completely dark
     } else {
-        // Regular lighting for walls
+        // regular lighting for walls
         result = ambient + attenuation * (diffuse + specular);
         return result;
     }
 
-    // return vec3(1.0, 0.0, 0.0);
     return ambient + attenuation * (diffuse + specular);
 }
 
