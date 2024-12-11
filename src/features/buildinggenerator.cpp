@@ -31,7 +31,7 @@ std::vector<float> BuildingGenerator::initializeBuildings() {
             glm::vec3 position(xPos, 0.0f, zPos);
 
             // apply position to all vertices of this building
-            float rndPosOffset = (rand() % 4) - 4/2.f; // add some randomness to the x and y positions of buildings
+            float rndPosOffset = (rand() % 2) - 2/2.f; // add some randomness to the x and y positions of buildings
             for(int i = 0; i < buildingData.size(); i += 9) {
                 glm::vec4 pos(buildingData[i] + rndPosOffset, buildingData[i+1], buildingData[i+2] + rndPosOffset, 1.0f);
                 glm::mat4 transform = glm::translate(glm::mat4(1.0f), position);
@@ -120,6 +120,7 @@ glm::vec3 BuildingGenerator::getRandomRoadPosition() {
     return glm::vec3(xPos, 0.0f, zPos);
 }
 
+
 std::vector<float> BuildingGenerator::getRoadData() {
     m_roadVertexData.clear();
     this->generateRoad();
@@ -128,87 +129,57 @@ std::vector<float> BuildingGenerator::getRoadData() {
 }
 
 std::vector<float> BuildingGenerator::generateRoad() {
-    std::vector<float> roadVertexData;
+    m_roadVertexData.clear();
 
-    // float roadWidth = 4.0f;
-    // float roadHeight = 1.f;
-    // float totalLength = settings.buildingMaxWidth * 100;
+    // Create a cube with just 1 subdivision for simplicity
+    Cube roadCube;
+    roadCube.updateParams(1);  // 1 means no subdivisions - keeps it simple
 
-    // // Road surface
-    // glm::vec3 roadColor(1.f, 1.f, 1.f);
-    // glm::vec3 upNormal(0.0f, 1.0f, 0.0f);
-    float roadWidth = 8.0f;  // Wider road
-    float roadHeight = 0.01f;  // Lower height to be just above ground
-    // float totalLength = settings.buildingMaxWidth * 100;
+    // For each road cell in the grid
+    for(const auto& cell : m_grid) {
+        if(cell.isRoad) {
+            // Get the cube's vertex data
+            std::vector<float> cubeData = roadCube.generateShape();
 
-    // Make road much brighter for testing
-    // glm::vec3 roadColor(0.6f, 0.6f, 0.6f);  // Light gray
-    glm::vec3 lineColor(1.0f, 1.0f, 0.0f);  // Bright yellow
-    glm::vec3 curbColor(0.5f, 0.5f, 0.5f);  // Light gray curbs
+            // Calculate the road position just like we do for buildings
+            float xPos = cell.col * settings.buildingMaxWidth;
+            float zPos = cell.row * settings.buildingMaxWidth;
 
-    // Get grid dimensions
-    int gridSize = this->citySize / settings.buildingMaxWidth;
-    float zOffset = (gridSize / 2) * settings.buildingMaxWidth;  // Middle row position
-    float totalLength = settings.buildingMaxWidth * gridSize;  // Match city size
+            // Scale and position the road cube:
+            // - Make it full width/depth to match the cell
+            // - But very thin in height (like a road)
+            glm::mat4 transform = glm::mat4(1.0f);
+            transform = glm::translate(transform, glm::vec3(xPos, 0.01f, zPos));  // Slightly above ground
+            transform = glm::scale(transform, glm::vec3(
+                                                  settings.buildingMaxWidth,  // Full cell width
+                                                  0.1f,                       // Very thin
+                                                  settings.buildingMaxWidth   // Full cell depth
+                                                  ));
 
-    // Center road at middle row
-    glm::vec3 roadColor(0.6f, 0.6f, 0.6f);
-    glm::vec3 upNormal(0.0f, 1.0f, 0.0f);
+            // Transform each vertex of the cube and add to road data
+            for(int i = 0; i < cubeData.size(); i += 6) {  // Assuming 6 floats per vertex (pos + normal)
+                glm::vec4 pos(cubeData[i], cubeData[i+1], cubeData[i+2], 1.0f);
+                glm::vec4 transformedPos = transform * pos;
 
-    // Main road surface - positioned at middle row
-    addQuad(
-        glm::vec3(-roadWidth, roadHeight, -zOffset/2),
-        glm::vec3(roadWidth, roadHeight, -zOffset/2),
-        glm::vec3(-roadWidth, roadHeight, totalLength - zOffset/2),
-        glm::vec3(roadWidth, roadHeight, totalLength - zOffset/2),
-        upNormal,
-        roadColor);
+                // Add position
+                m_roadVertexData.push_back(transformedPos.x);
+                m_roadVertexData.push_back(transformedPos.y);
+                m_roadVertexData.push_back(transformedPos.z);
 
-    // Main road surface
-    addQuad(
-        glm::vec3(-roadWidth, roadHeight, 0.0f),
-        glm::vec3(roadWidth, roadHeight, 0.0f),
-        glm::vec3(-roadWidth, roadHeight, totalLength),
-        glm::vec3(roadWidth, roadHeight, totalLength),
-        upNormal,
-        roadColor);
+                // Add normal
+                m_roadVertexData.push_back(cubeData[i+3]);
+                m_roadVertexData.push_back(cubeData[i+4]);
+                m_roadVertexData.push_back(cubeData[i+5]);
 
-    // Center line
-    float lineWidth = 0.5f;
-    float lineHeight = roadHeight + 0.01f;
-    // glm::vec3 lineColor(0.9f, 0.9f, 0.7f);
+                // Add color (dark gray for road)
+                m_roadVertexData.push_back(0.3f);  // Red
+                m_roadVertexData.push_back(0.3f);  // Green
+                m_roadVertexData.push_back(0.3f);  // Blue
+            }
+        }
+    }
 
-    addQuad(
-        glm::vec3(-lineWidth/2, lineHeight, 0.0f),
-        glm::vec3(lineWidth/2, lineHeight, 0.0f),
-        glm::vec3(-lineWidth/2, lineHeight, totalLength),
-        glm::vec3(lineWidth/2, lineHeight, totalLength),
-        upNormal,
-        lineColor);
-
-    // side curbs
-    float curbHeight = 1.1f;
-    // glm::vec3 curbColor(0.3f, 0.3f, 0.3f);
-
-    // Left curb
-    addQuad(
-        glm::vec3(-roadWidth-0.2f, 0.0f, 0.0f),
-        glm::vec3(-roadWidth, curbHeight, 0.0f),
-        glm::vec3(-roadWidth-0.2f, 0.0f, totalLength),
-        glm::vec3(-roadWidth, curbHeight, totalLength),
-        glm::normalize(glm::vec3(1.0f, 1.0f, 0.0f)),
-        curbColor);
-
-    // Right curb
-    addQuad(
-        glm::vec3(roadWidth, curbHeight, 0.0f),
-        glm::vec3(roadWidth+0.2f, 0.0f, 0.0f),
-        glm::vec3(roadWidth, curbHeight, totalLength),
-        glm::vec3(roadWidth+0.2f, 0.0f, totalLength),
-        glm::normalize(glm::vec3(-1.0f, 1.0f, 0.0f)),
-        curbColor);
-
-    return roadVertexData;
+    return m_roadVertexData;
 }
 
 void BuildingGenerator::addQuad(glm::vec3 bl, glm::vec3 br, glm::vec3 tl, glm::vec3 tr,

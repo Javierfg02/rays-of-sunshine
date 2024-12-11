@@ -242,28 +242,10 @@ void Realtime::paintGL() {
 
     // draw road - reapply uniforms to be safe
     this->setGlobalUniforms(m_shaderManager.building_shader);
-
-    // Set specific material properties for road
-    SceneMaterial roadMaterial = {
-        glm::vec4(0.2f),       // ambient
-        glm::vec4(0.5f),       // diffuse - darker than buildings
-        glm::vec4(0.1f),       // less specular than buildings
-        16.0f,                 // less shiny
-        glm::vec4(1.0f)        // reflective
-    };
-
-    glUniform3fv(glGetUniformLocation(m_shaderManager.building_shader, "material.ambient"), 1, &roadMaterial.cAmbient[0]);
-    glUniform3fv(glGetUniformLocation(m_shaderManager.building_shader, "material.diffuse"), 1, &roadMaterial.cDiffuse[0]);
-    glUniform3fv(glGetUniformLocation(m_shaderManager.building_shader, "material.specular"), 1, &roadMaterial.cSpecular[0]);
-    glUniform1f(glGetUniformLocation(m_shaderManager.building_shader, "material.shininess"), roadMaterial.shininess);
-
-    // draw road
     glBindVertexArray(m_road_vao);
     glDrawArrays(GL_TRIANGLES, 0, m_roadVertexCount);
     glBindVertexArray(0);
-    std::cout << "Drawing road with " << m_roadVertexCount << " vertices" << std::endl;
-
-    glUseProgram(0);
+    glEnable(GL_DEPTH_TEST);
 
     // unbind fbo
     glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
