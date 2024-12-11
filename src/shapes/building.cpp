@@ -7,8 +7,8 @@ void Building::updateParams() {
     m_numFloors = 3 + rand() % 8;  // 3 to 10 floors
     m_windowsPerFloor = 2 + rand() % 3;  // 2 to 4 windows
     m_floorHeight = 0.8f + (rand() % 100) / 100.0f * 0.8f;
-    m_buildingWidth = 1.0f + (rand() % (int)settings.buildingMaxWidth) / settings.buildingMaxWidth;
-    m_buildingDepth = 1.0f + (rand() % (int)settings.buildingMaxWidth) / settings.buildingMaxWidth;
+    m_buildingWidth = 1.0f + (rand() % (int)settings.buildingMaxWidth) / 2.f;
+    m_buildingDepth = 1.0f + (rand() % (int)settings.buildingMaxWidth) / 2.f;
 
     // random tessellation for variety in building faces
     m_tessellation = 1 + rand() % 8;

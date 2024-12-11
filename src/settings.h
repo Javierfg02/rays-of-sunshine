@@ -20,7 +20,7 @@ struct Settings {
     glm::vec4 backgroundColor = glm::vec4(0.f, 0.f, 0.f, 1.0f);
 
     // buildings
-    float buildingSpacing = .5f;
+    float buildingSpacing = .7f;
     float buildingMaxWidth = 3.5f;
     float windowWidth = 0.2f;
     float windowHeight = 0.3f;
