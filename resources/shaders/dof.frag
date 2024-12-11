@@ -1,5 +1,6 @@
 #version 330 core
 
+in vec2 uv_coord;
 out vec4 fragColor;
 
 uniform sampler2D colorTexture;
@@ -21,7 +22,7 @@ void main() {
     );
     vec4 kernelAdditionH = vec4(0.0);
     for (int i = 0; i < 5; i++) {
-        vec2 scaledUV = gl_FragCoord.xy / textureSize(colorTexture, 0) + kernelOffsetsH[i] * uvChangeH;
+        vec2 scaledUV = uv_coord + kernelOffsetsH[i] * uvChangeH;
         kernelAdditionH += texture(hblurTexture, scaledUV) * weights[i];
     }
 
@@ -31,7 +32,7 @@ void main() {
     );
     vec4 kernelAdditionV = vec4(0.0);
     for (int i = 0; i < 5; i++) {
-        vec2 scaledUV = gl_FragCoord.xy / textureSize(colorTexture, 0) + kernelOffsetsV[i] * uvChangeV;
+        vec2 scaledUV = uv_coord + kernelOffsetsV[i] * uvChangeV;
         kernelAdditionV += texture(vblurTexture, scaledUV) * weights[i];
     }
 
@@ -39,8 +40,8 @@ void main() {
     vec4 blurredColor = (kernelAdditionH + kernelAdditionV) * (1.0 / 0.925);
 
     // get original color and depth
-    vec3 originalColor = texture(colorTexture, gl_FragCoord.xy / textureSize(colorTexture, 0)).rgb;
-    float depth = texture(depthTexture, gl_FragCoord.xy / textureSize(depthTexture, 0)).r;
+    vec3 originalColor = texture(colorTexture, uv_coord).rgb;
+    float depth = texture(depthTexture, uv_coord).r;
 
     // calculate blur factor based on depth
     float blurFactor = clamp(abs(depth - focusDepth) * blurScale, 0.0, 1.0);
