@@ -262,6 +262,10 @@ void Realtime::setUpArrays(std::vector<float>& allBuildingData, BuildingGenerato
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
 
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)0); // position
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3 * sizeof(float))); // normal
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float))); // color
+
     // unbind the fullscreen quad's VBO and VAO
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
@@ -284,17 +288,47 @@ void Realtime::renderFullscreenQuad() {
   glBindVertexArray(0);
 }
 
-void Realtime::paintGL() {
-    // glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
-    // glViewport(0, 0, m_fbo_width, m_fbo_height);
-    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+// void Realtime::paintGL() {
+//     // glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+//     // glViewport(0, 0, m_fbo_width, m_fbo_height);
+//     // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+//     // use the building shader
+//     glUseProgram(m_shaderManager.building_shader);
+//     GLenum error = glGetError();
+//     if (error != GL_NO_ERROR) {
+//         std::cout << "OpenGL error after glUseProgram: " << error << std::endl;
+//     }
+
+//     // update spot light
+//     this->updateSpotLight();
+
+//     // set global uniforms
+//     this->setGlobalUniforms(m_shaderManager.building_shader);
+
+//     // draw building
+//     glBindVertexArray(m_vao); // vao will keep a reference to the vbo, so only need to bind vao
+//     glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
+//     glBindVertexArray(0);
+
+//     // draw road
+
+//     // after drawing buildings
+//     glBindVertexArray(m_road_vao);
+//     glDrawArrays(GL_TRIANGLES, 0, m_roadVertexCount);
+//     glBindVertexArray(0);
+//     glUseProgram(0);
+
+//     // glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
+//     // glViewport(0, 0, m_screen_width, m_screen_height);
+//     // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+//     // paint textures
+//     // paintTextures();
+// }
+void Realtime::paintGL() {
     // use the building shader
     glUseProgram(m_shaderManager.building_shader);
-    GLenum error = glGetError();
-    if (error != GL_NO_ERROR) {
-        std::cout << "OpenGL error after glUseProgram: " << error << std::endl;
-    }
 
     // update spot light
     this->updateSpotLight();
@@ -302,25 +336,35 @@ void Realtime::paintGL() {
     // set global uniforms
     this->setGlobalUniforms(m_shaderManager.building_shader);
 
-    // draw building
-    glBindVertexArray(m_vao); // vao will keep a reference to the vbo, so only need to bind vao
+    // draw buildings
+    glBindVertexArray(m_vao);
     glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
     glBindVertexArray(0);
 
-    // draw road
+    // draw road - reapply uniforms to be safe
+    this->setGlobalUniforms(m_shaderManager.building_shader);
 
-    // after drawing buildings
+    // Set specific material properties for road
+    SceneMaterial roadMaterial = {
+        glm::vec4(0.2f),       // ambient
+        glm::vec4(0.5f),       // diffuse - darker than buildings
+        glm::vec4(0.1f),       // less specular than buildings
+        16.0f,                 // less shiny
+        glm::vec4(1.0f)        // reflective
+    };
+
+    glUniform3fv(glGetUniformLocation(m_shaderManager.building_shader, "material.ambient"), 1, &roadMaterial.cAmbient[0]);
+    glUniform3fv(glGetUniformLocation(m_shaderManager.building_shader, "material.diffuse"), 1, &roadMaterial.cDiffuse[0]);
+    glUniform3fv(glGetUniformLocation(m_shaderManager.building_shader, "material.specular"), 1, &roadMaterial.cSpecular[0]);
+    glUniform1f(glGetUniformLocation(m_shaderManager.building_shader, "material.shininess"), roadMaterial.shininess);
+
+    // draw road
     glBindVertexArray(m_road_vao);
     glDrawArrays(GL_TRIANGLES, 0, m_roadVertexCount);
     glBindVertexArray(0);
+    std::cout << "Drawing road with " << m_roadVertexCount << " vertices" << std::endl;
+
     glUseProgram(0);
-
-    // glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
-    // glViewport(0, 0, m_screen_width, m_screen_height);
-    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    // paint textures
-    // paintTextures();
 }
 
 void Realtime::makeFBO(){

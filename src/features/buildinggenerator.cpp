@@ -123,19 +123,46 @@ glm::vec3 BuildingGenerator::getRandomRoadPosition() {
 std::vector<float> BuildingGenerator::getRoadData() {
     m_roadVertexData.clear();
     this->generateRoad();
+    std::cout << "Road vertex data size: " << m_roadVertexData.size() << std::endl;
     return m_roadVertexData;
 }
 
 std::vector<float> BuildingGenerator::generateRoad() {
     std::vector<float> roadVertexData;
 
-    float roadWidth = 4.0f;
-    float roadHeight = 1.f;
-    float totalLength = settings.buildingMaxWidth * 100;
+    // float roadWidth = 4.0f;
+    // float roadHeight = 1.f;
+    // float totalLength = settings.buildingMaxWidth * 100;
 
-    // Road surface
-    glm::vec3 roadColor(1.f, 1.f, 1.f);
+    // // Road surface
+    // glm::vec3 roadColor(1.f, 1.f, 1.f);
+    // glm::vec3 upNormal(0.0f, 1.0f, 0.0f);
+    float roadWidth = 8.0f;  // Wider road
+    float roadHeight = 0.01f;  // Lower height to be just above ground
+    // float totalLength = settings.buildingMaxWidth * 100;
+
+    // Make road much brighter for testing
+    // glm::vec3 roadColor(0.6f, 0.6f, 0.6f);  // Light gray
+    glm::vec3 lineColor(1.0f, 1.0f, 0.0f);  // Bright yellow
+    glm::vec3 curbColor(0.5f, 0.5f, 0.5f);  // Light gray curbs
+
+    // Get grid dimensions
+    int gridSize = this->citySize / settings.buildingMaxWidth;
+    float zOffset = (gridSize / 2) * settings.buildingMaxWidth;  // Middle row position
+    float totalLength = settings.buildingMaxWidth * gridSize;  // Match city size
+
+    // Center road at middle row
+    glm::vec3 roadColor(0.6f, 0.6f, 0.6f);
     glm::vec3 upNormal(0.0f, 1.0f, 0.0f);
+
+    // Main road surface - positioned at middle row
+    addQuad(
+        glm::vec3(-roadWidth, roadHeight, -zOffset/2),
+        glm::vec3(roadWidth, roadHeight, -zOffset/2),
+        glm::vec3(-roadWidth, roadHeight, totalLength - zOffset/2),
+        glm::vec3(roadWidth, roadHeight, totalLength - zOffset/2),
+        upNormal,
+        roadColor);
 
     // Main road surface
     addQuad(
@@ -149,7 +176,7 @@ std::vector<float> BuildingGenerator::generateRoad() {
     // Center line
     float lineWidth = 0.5f;
     float lineHeight = roadHeight + 0.01f;
-    glm::vec3 lineColor(0.9f, 0.9f, 0.7f);
+    // glm::vec3 lineColor(0.9f, 0.9f, 0.7f);
 
     addQuad(
         glm::vec3(-lineWidth/2, lineHeight, 0.0f),
@@ -161,7 +188,7 @@ std::vector<float> BuildingGenerator::generateRoad() {
 
     // side curbs
     float curbHeight = 1.1f;
-    glm::vec3 curbColor(0.3f, 0.3f, 0.3f);
+    // glm::vec3 curbColor(0.3f, 0.3f, 0.3f);
 
     // Left curb
     addQuad(
