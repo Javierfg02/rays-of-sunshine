@@ -18,6 +18,7 @@
 #include "./utils/shadermanager.h"
 #include "shapes/building.h"
 #include "./features/bezier.h"
+#include "./features/buildinggenerator.h"
 
 class Realtime : public QOpenGLWidget
 {
@@ -81,8 +82,14 @@ private:
     ShaderManager& m_shaderManager = ShaderManager::getInstance();
 
     // VBO/VAO
+    void setUpArrays(std::vector<float>& allBuildingData, BuildingGenerator* buildingGenerator);
     GLuint m_vbo;
     GLuint m_vao;
+
+    // road VBO/VAO
+    GLuint m_road_vbo;
+    GLuint m_road_vao;
+    int m_roadVertexCount;
 
     // transforamtion matrices
     glm::mat4 m_model = glm::mat4(1);

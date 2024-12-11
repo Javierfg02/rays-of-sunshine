@@ -8,7 +8,6 @@
 #include "settings.h"
 #include "./utils/sceneparser.h"
 #include "./utils/shaderloader.h"
-#include "./features/buildinggenerator.h"
 
 // ================== Project 5: Lights, Camera
 
@@ -75,6 +74,15 @@ void Realtime::initializeGL() {
     // clear any existing lights
     m_renderData.lights.clear();
 
+    // Add a bright directional light for testing
+    // SceneLightData directionalLight;
+    // directionalLight.id = 0;
+    // directionalLight.type = LightType::LIGHT_DIRECTIONAL;
+    // directionalLight.color = glm::vec4(2.0f, 2.0f, 2.0f, 2.0f);  // Bright white light
+    // directionalLight.dir = glm::normalize(glm::vec4(0.3f, 0.3f, 0.3f, 0.0f));
+    // directionalLight.function = glm::vec3(1.0f, 0.0f, 0.0f);
+    // m_renderData.lights.push_back(directionalLight);
+
     // set default global illumination coefficients
     m_renderData.globalData.ka = settings.ka;  // low ambient for dark night scene
     m_renderData.globalData.kd = settings.kd;  // diffuse
@@ -93,25 +101,7 @@ void Realtime::initializeGL() {
     std::cout << "Total vertex data size: " << allBuildingData.size() << std::endl;
     std::cout << "Calculated vertex count: " << m_vertexCount << std::endl;
 
-    // vao and vbo setup
-    glGenBuffers(1, &m_vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-
-    glBufferData(GL_ARRAY_BUFFER, allBuildingData.size() * sizeof(float), allBuildingData.data(), GL_STATIC_DRAW);
-
-    glGenVertexArrays(1, &m_vao);
-    glBindVertexArray(m_vao);
-
-    glEnableVertexAttribArray(0); // position
-    glEnableVertexAttribArray(1); // normal
-    glEnableVertexAttribArray(2); // color
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)0); // position
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3 * sizeof(float))); // normal
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float))); // color
-
-    glBindVertexArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    this->setUpArrays(allBuildingData, buildingGenerator);
 
     // transformation matrices
     m_camera = Camera(m_renderData.cameraData,
@@ -164,6 +154,52 @@ void Realtime::initializeGL() {
     // makeFBO();
 }
 
+void Realtime::setUpArrays(std::vector<float>& allBuildingData, BuildingGenerator* buildingGenerator) {
+
+    // Buildings vao and vbo setup
+    glGenBuffers(1, &m_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+
+    glBufferData(GL_ARRAY_BUFFER, allBuildingData.size() * sizeof(float), allBuildingData.data(), GL_STATIC_DRAW);
+
+    glGenVertexArrays(1, &m_vao);
+    glBindVertexArray(m_vao);
+
+    glEnableVertexAttribArray(0); // position
+    glEnableVertexAttribArray(1); // normal
+    glEnableVertexAttribArray(2); // color
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)0); // position
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3 * sizeof(float))); // normal
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float))); // color
+
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    // Generate road data
+    std::vector<float> roadData = buildingGenerator->getRoadData();
+    m_roadVertexCount = roadData.size() / 9; // 9 floats per vertex
+
+    // Create and bind road VAO/VBO
+    glGenBuffers(1, &m_road_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, m_road_vbo);
+    glBufferData(GL_ARRAY_BUFFER, roadData.size() * sizeof(float), roadData.data(), GL_STATIC_DRAW);
+
+    glGenVertexArrays(1, &m_road_vao);
+    glBindVertexArray(m_road_vao);
+
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float)));
+
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
 void Realtime::paintGL() {
     // glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
     // glViewport(0, 0, m_fbo_width, m_fbo_height);
@@ -186,6 +222,18 @@ void Realtime::paintGL() {
     // draw building
     glBindVertexArray(m_vao); // vao will keep a reference to the vbo, so only need to bind vao
     glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
+    glBindVertexArray(0);
+
+    // After drawing buildings
+    glBindVertexArray(m_road_vao);
+    // Add debug check
+    GLenum err = glGetError();
+    if(err != GL_NO_ERROR) {
+        std::cout << "OpenGL error before road draw: " << err << std::endl;
+    }
+    glDrawArrays(GL_TRIANGLES, 0, m_roadVertexCount);
+    std::cout << "Drawing road with " << m_roadVertexCount << " vertices" << std::endl;
+    glBindVertexArray(0);
     glBindVertexArray(0);
     glUseProgram(0);
 

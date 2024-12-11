@@ -120,16 +120,156 @@ glm::vec3 BuildingGenerator::getRandomRoadPosition() {
     return glm::vec3(xPos, 0.0f, zPos);
 }
 
+std::vector<float> BuildingGenerator::getRoadData() {
+    m_roadVertexData.clear();
+    generateRoad();
+    return m_roadVertexData;
+}
+
+std::vector<float> BuildingGenerator::generateRoad() {
+    std::vector<float> roadVertexData;
+
+    float roadWidth = 4.0f;
+    float roadHeight = 0.1f;
+    float totalLength = settings.buildingMaxWidth * 20;
+
+    // Road surface
+    glm::vec3 roadColor(0.3f, 0.3f, 0.3f);
+    glm::vec3 upNormal(0.0f, 1.0f, 0.0f);
+
+    // Main road surface
+    addQuad(
+        glm::vec3(-roadWidth, roadHeight, 0.0f),
+        glm::vec3(roadWidth, roadHeight, 0.0f),
+        glm::vec3(-roadWidth, roadHeight, totalLength),
+        glm::vec3(roadWidth, roadHeight, totalLength),
+        upNormal,
+        roadColor);
+
+    // Center line
+    float lineWidth = 0.1f;
+    float lineHeight = roadHeight + 0.001f;
+    glm::vec3 lineColor(0.9f, 0.9f, 0.7f);
+
+    addQuad(
+        glm::vec3(-lineWidth/2, lineHeight, 0.0f),
+        glm::vec3(lineWidth/2, lineHeight, 0.0f),
+        glm::vec3(-lineWidth/2, lineHeight, totalLength),
+        glm::vec3(lineWidth/2, lineHeight, totalLength),
+        upNormal,
+        lineColor
+        );
+
+    // Side curbs
+    float curbHeight = 0.1f;
+    glm::vec3 curbColor(0.3f, 0.3f, 0.3f);
+
+    // Left curb
+    addQuad(
+        glm::vec3(-roadWidth-0.2f, 0.0f, 0.0f),
+        glm::vec3(-roadWidth, curbHeight, 0.0f),
+        glm::vec3(-roadWidth-0.2f, 0.0f, totalLength),
+        glm::vec3(-roadWidth, curbHeight, totalLength),
+        glm::normalize(glm::vec3(1.0f, 1.0f, 0.0f)),
+        curbColor
+        );
+
+    // Right curb
+    addQuad(
+        glm::vec3(roadWidth, curbHeight, 0.0f),
+        glm::vec3(roadWidth+0.2f, 0.0f, 0.0f),
+        glm::vec3(roadWidth, curbHeight, totalLength),
+        glm::vec3(roadWidth+0.2f, 0.0f, totalLength),
+        glm::normalize(glm::vec3(-1.0f, 1.0f, 0.0f)),
+        curbColor
+        );
+
+    return roadVertexData;
+}
+
+void BuildingGenerator::addQuad(
+    glm::vec3 bl, glm::vec3 br, glm::vec3 tl, glm::vec3 tr,
+    glm::vec3 normal, glm::vec3 color) {
+
+    // First triangle (bl, br, tr)
+    // bottom left vertex
+    m_roadVertexData.push_back(bl.x);
+    m_roadVertexData.push_back(bl.y);
+    m_roadVertexData.push_back(bl.z);
+    m_roadVertexData.push_back(normal.x);
+    m_roadVertexData.push_back(normal.y);
+    m_roadVertexData.push_back(normal.z);
+    m_roadVertexData.push_back(color.r);
+    m_roadVertexData.push_back(color.g);
+    m_roadVertexData.push_back(color.b);
+
+    // bottom right vertex
+    m_roadVertexData.push_back(br.x);
+    m_roadVertexData.push_back(br.y);
+    m_roadVertexData.push_back(br.z);
+    m_roadVertexData.push_back(normal.x);
+    m_roadVertexData.push_back(normal.y);
+    m_roadVertexData.push_back(normal.z);
+    m_roadVertexData.push_back(color.r);
+    m_roadVertexData.push_back(color.g);
+    m_roadVertexData.push_back(color.b);
+
+    // top right vertex
+    m_roadVertexData.push_back(tr.x);
+    m_roadVertexData.push_back(tr.y);
+    m_roadVertexData.push_back(tr.z);
+    m_roadVertexData.push_back(normal.x);
+    m_roadVertexData.push_back(normal.y);
+    m_roadVertexData.push_back(normal.z);
+    m_roadVertexData.push_back(color.r);
+    m_roadVertexData.push_back(color.g);
+    m_roadVertexData.push_back(color.b);
+
+    // second triangle (bl, tr, tl)
+    // bottom left vertex
+    m_roadVertexData.push_back(bl.x);
+    m_roadVertexData.push_back(bl.y);
+    m_roadVertexData.push_back(bl.z);
+    m_roadVertexData.push_back(normal.x);
+    m_roadVertexData.push_back(normal.y);
+    m_roadVertexData.push_back(normal.z);
+    m_roadVertexData.push_back(color.r);
+    m_roadVertexData.push_back(color.g);
+    m_roadVertexData.push_back(color.b);
+
+    // top right vertex
+    m_roadVertexData.push_back(tr.x);
+    m_roadVertexData.push_back(tr.y);
+    m_roadVertexData.push_back(tr.z);
+    m_roadVertexData.push_back(normal.x);
+    m_roadVertexData.push_back(normal.y);
+    m_roadVertexData.push_back(normal.z);
+    m_roadVertexData.push_back(color.r);
+    m_roadVertexData.push_back(color.g);
+    m_roadVertexData.push_back(color.b);
+
+    // top left vertex
+    m_roadVertexData.push_back(tl.x);
+    m_roadVertexData.push_back(tl.y);
+    m_roadVertexData.push_back(tl.z);
+    m_roadVertexData.push_back(normal.x);
+    m_roadVertexData.push_back(normal.y);
+    m_roadVertexData.push_back(normal.z);
+    m_roadVertexData.push_back(color.r);
+    m_roadVertexData.push_back(color.g);
+    m_roadVertexData.push_back(color.b);
+}
+
 glm::mat4 BuildingGenerator::getRandomRotatedTransform(float x, float z) {
-    // Random rotation between -5 and 5 degrees
+    // random rotation between -5 and 5 degrees
     float randomAngle = (((float)rand() / RAND_MAX) * 10.0f - 5.0f) * (M_PI / 180.0f);
 
-    // First translate to position
+    // first translate to position
     glm::mat4 translation = glm::translate(glm::mat4(1.0f), glm::vec3(x, 0.0f, z));
 
-    // Then rotate around Y axis
+    // then rotate around Y axis
     glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), randomAngle, glm::vec3(0.0f, 1.0f, 0.0f));
 
-    // Combine transformations: translation * rotation
+    // combine transformations: translation * rotation
     return translation * rotation;
 }
