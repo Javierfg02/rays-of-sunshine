@@ -479,7 +479,6 @@ void Realtime::rotateCamera(float deltaX, float deltaY) {
     m_view = m_camera.getViewMatrix();
 }
 
-// Replace the timerEvent implementation:
 void Realtime::timerEvent(QTimerEvent *event) {
     int elapsedms = m_elapsedTimer.elapsed();
     float deltaTime = elapsedms * 0.001f;
@@ -489,7 +488,7 @@ void Realtime::timerEvent(QTimerEvent *event) {
     float moveSpeed = settings.moveSpeed * deltaTime;
     bool isWalking = false;
 
-    // Handle forward/backward movement
+    // handle forward/backward movement
     if (m_keyMap[Qt::Key_W] && currentPos.x <= 85.f) {
         currentPos.x += moveSpeed;
         isWalking = true;
@@ -498,28 +497,26 @@ void Realtime::timerEvent(QTimerEvent *event) {
         isWalking = true;
     }
 
-    // Handle walking animation
+    // handle walking animation
     if (isWalking) {
         if (!m_wasWalking) {
             m_walkCycleTime = 0.0f;
             m_walkingCurve.resetCurve(currentPos.y);
         }
 
-        // slower walk cycle
-        float walkSpeed = 2.0f; // Reduced from 4.0f for more natural motion
+        float walkSpeed = settings.moveSpeed;
         m_walkCycleTime += deltaTime * walkSpeed;
 
         // get position from Bezier curve
         BezierPoint point = m_walkingCurve.bezierBasis(m_walkCycleTime);
         currentPos.y = point.y;
 
-        // remove camera lean modification to preserve rotation
     } else if (m_wasWalking) {
-        // smoothly return to base height without affecting rotation
+        // smoothly return to base height
         currentPos.y = glm::mix(currentPos.y, settings.baseHeight, deltaTime * 5.0f);
     }
 
-    // Sprint
+    // sprint
     if(m_keyMap[Qt::Key_Shift]) {
         settings.moveSpeed = 5.0f;
     } else {

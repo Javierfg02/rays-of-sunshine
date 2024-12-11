@@ -28,7 +28,7 @@ struct Settings {
     glm::vec3 wallColor = glm::vec3(0.4f, 0.4f, 0.4f);
 
     // gravity
-    float moveSpeed = 0.25f;
+    float moveSpeed = 2.f;
     float gravity = 9.81;
     float min_height = 1.0f;
     float jump_force = 3.5f;
