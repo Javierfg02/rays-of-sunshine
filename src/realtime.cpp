@@ -119,11 +119,25 @@ void Realtime::initializeGL() {
     buildingShape.ctm = glm::mat4(1.0f);
     m_shapes.push_back(buildingShape);
 
+<<<<<<< Updated upstream
     // // create hblur texture uniform
     // glUseProgram(m_shaderManager.dof_shader);
     // GLint hblurTextureLoc = glGetUniformLocation(m_shaderManager.dof_shader, "hblurTexture");
     // glUniform1i(hblurTextureLoc, 0);
     // // glUseProgram(0);
+=======
+    // create dof texture uniforms
+    glUseProgram(m_shaderManager.dof_shader);
+    GLint hblurTextureLoc = glGetUniformLocation(m_shaderManager.dof_shader, "hblurTexture");
+    glUniform1i(hblurTextureLoc, 0);
+    GLint vblurTextureLoc = glGetUniformLocation(m_shaderManager.dof_shader, "vblurTexture");
+    glUniform1i(vblurTextureLoc, 1);
+    GLint colorTextureLoc = glGetUniformLocation(m_shaderManager.dof_shader, "colorTexture");
+    glUniform1i(colorTextureLoc, 2);
+    GLint depthTextureLoc = glGetUniformLocation(m_shaderManager.dof_shader, "depthTexture");
+    glUniform1i(depthTextureLoc, 3);
+    glUseProgram(0);
+>>>>>>> Stashed changes
 
     // // create vblur texture uniform
     // // glUseProgram(m_shaderManager.vblur_shader);
@@ -139,12 +153,72 @@ void Realtime::initializeGL() {
     // glUniform1i(depthTextureLoc, 3);
     // glUseProgram(0);
 
+<<<<<<< Updated upstream
     // setupFullscreenQuad();
 
     // makeFBO();
+=======
+// void Realtime::paintGL() {
+//     glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+//     glViewport(0, 0, m_fbo_width, m_fbo_height);
+//     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+//     // use the building shader
+//     glUseProgram(m_shaderManager.building_shader);
+
+//     // send matrices to shader
+//     glm::mat4 model = m_shapes[0].ctm;
+//     glUniformMatrix4fv(glGetUniformLocation(m_shaderManager.building_shader, "modelMatrix"), 1, GL_FALSE, &model[0][0]);
+//     glUniformMatrix4fv(glGetUniformLocation(m_shaderManager.building_shader, "viewMatrix"), 1, GL_FALSE, &m_view[0][0]);
+//     glUniformMatrix4fv(glGetUniformLocation(m_shaderManager.building_shader, "projMatrix"), 1, GL_FALSE, &m_proj[0][0]);
+
+//     // draw building
+//     glBindVertexArray(m_vao); // vao will keep a reference to the vbo, so only need to bind vao
+//     glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
+//     glBindVertexArray(0);
+//     glUseProgram(0);
+
+//     glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
+//     glViewport(0, 0, m_screen_width, m_screen_height);
+//     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+//     // paint textures
+//     paintTextures();
+// }
+
+void Realtime::resizeGL(int w, int h) {
+    glViewport(0, 0, size().width() * m_devicePixelRatio, size().height() * m_devicePixelRatio);
+    m_aspect_ratio = static_cast<float>(w) / static_cast<float>(h);
+    m_proj = m_camera.getProjectionMatrix();
+>>>>>>> Stashed changes
 }
 
 void Realtime::setupFullscreenQuad() {
+    // std::vector<GLfloat> fullscreen_quad_data =
+        // { //    POSITIONS    //    UV COORDS
+        //     -1.0f, 1.0f,  0.0f,   0.0f, 1.0f,
+        //     -1.0f, -1.0f, 0.0f,   0.0f, 0.0f,
+        //     1.0f,  -1.0f, 0.0f,   1.0f, 0.0f,
+        //     1.0f,  1.0f,  0.0f,   1.0f, 1.0f,
+        //     -1.0f, 1.0f,  0.0f,   0.0f, 1.0f,
+        //     1.0f,  -1.0f, 0.0f,   1.0f, 0.0f
+        // };
+
+    // // generate and bind a VBO and a VAO for a fullscreen quad
+    // glGenBuffers(1, &m_fullscreen_vbo);
+    // glBindBuffer(GL_ARRAY_BUFFER, m_fullscreen_vbo);
+    // glBufferData(GL_ARRAY_BUFFER, fullscreen_quad_data.size() * sizeof(GLfloat), fullscreen_quad_data.data(), GL_STATIC_DRAW);
+    // glGenVertexArrays(1, &m_fullscreen_vao);
+    // glBindVertexArray(m_fullscreen_vao);
+  
+    // use the dof shader
+    // GLuint dof_shader = m_shaderManager.getShader(ShaderManager::ShaderType::DEPTH_OF_FIELD);
+    // glUseProgram(dof_shader);
+
+    // GLint textureLoc = glGetUniformLocation(dof_shader, "texture");
+    // glUniform1i(textureLoc, 0);
+    // glUseProgram(0);
+
     std::vector<GLfloat> fullscreen_quad_data =
         { //    POSITIONS    //    UV COORDS
             -1.0f, 1.0f,  0.0f,   0.0f, 1.0f,
@@ -171,12 +245,17 @@ void Realtime::setupFullscreenQuad() {
     // unbind the fullscreen quad's VBO and VAO
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+<<<<<<< Updated upstream
 }
 
 void Realtime::renderFullscreenQuad() {
     glBindVertexArray(m_fullscreen_vao);
     glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
     glBindVertexArray(0);
+=======
+
+    // makeFBO();
+>>>>>>> Stashed changes
 }
 
 void Realtime::setUpArrays(std::vector<float>& allBuildingData, BuildingGenerator* buildingGenerator) {
@@ -222,31 +301,59 @@ void Realtime::setUpArrays(std::vector<float>& allBuildingData, BuildingGenerato
     glBindVertexArray(0);
 }
 
+<<<<<<< Updated upstream
+=======
+void Realtime::renderFullscreenQuad() {
+  //   glBindVertexArray(m_fullscreen_vao);
+  //   glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
+  //   glBindVertexArray(0);
+  
+  //   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)0);
+  //   glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3 * sizeof(float)));
+  //   glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float)));
+
+  //   glBindVertexArray(0);
+  //   glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+  glBindVertexArray(m_fullscreen_vao);
+  glDrawArrays(GL_TRIANGLES, 0, 6);
+  glBindVertexArray(0);
+}
+
+>>>>>>> Stashed changes
 void Realtime::paintGL() {
     // glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
     // glViewport(0, 0, m_fbo_width, m_fbo_height);
     // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // use the building shader
-    GLuint building_shader = m_shaderManager.getShader(ShaderManager::ShaderType::BUILDING);
-    glUseProgram(building_shader);
+    glUseProgram(m_shaderManager.building_shader);
     GLenum error = glGetError();
+<<<<<<< Updated upstream
     if(error != GL_NO_ERROR) {
         std::cerr << "OpenGL error after glUseProgram: " << error << std::endl;
+=======
+    if (error != GL_NO_ERROR) {
+        std::cout << "OpenGL error after glUseProgram: " << error << std::endl;
+>>>>>>> Stashed changes
     }
 
     // update spot light
     this->updateSpotLight();
 
     // set global uniforms
-    this->setGlobalUniforms(building_shader);
+    this->setGlobalUniforms(m_shaderManager.building_shader);
 
     // draw building
     glBindVertexArray(m_vao); // vao will keep a reference to the vbo, so only need to bind vao
     glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
     glBindVertexArray(0);
 
+<<<<<<< Updated upstream
     // draw road
+=======
+    // after drawing buildings
+>>>>>>> Stashed changes
     glBindVertexArray(m_road_vao);
     glDrawArrays(GL_TRIANGLES, 0, m_roadVertexCount);
     glBindVertexArray(0);
@@ -256,10 +363,14 @@ void Realtime::paintGL() {
     // glViewport(0, 0, m_screen_width, m_screen_height);
     // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+<<<<<<< Updated upstream
     // glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
     // glViewport(0, 0, m_fbo_width, m_fbo_height);
     // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+=======
+    // paint textures
+>>>>>>> Stashed changes
     // paintTextures();
 }
 
@@ -273,9 +384,8 @@ void Realtime::makeFBO(){
     // general scene
     generateTexture(colorTexture, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE);
     generateTexture(depthTexture, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8);
-    // setupFramebuffer(m_fbo, colorTexture, depthTexture); // want to actually show scene_fbo
 
-    // generate fbo
+    // GENERATE FBO -----------------------------
     glGenFramebuffers(1, &m_fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
 
@@ -292,9 +402,15 @@ void Realtime::makeFBO(){
     glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
 }
 
+<<<<<<< Updated upstream
 void Realtime::paintTextures() {
     // horizontal blur
+=======
+void Realtime::paintTextures(){
+>>>>>>> Stashed changes
     glUseProgram(m_shaderManager.dof_shader);
+
+    // HORIZONTAL BLUR -----------------------------
 
     GLint uvChangeHLoc = glGetUniformLocation(m_shaderManager.dof_shader, "uvChangeH");
     glUniform2f(uvChangeHLoc, 1.0 / m_fbo_width, 0.0);
@@ -329,7 +445,6 @@ void Realtime::paintTextures() {
 
 void Realtime::generateTexture(GLuint &texture, GLint internalFormat, GLint format, GLenum type) {
     glGenTextures(1, &texture);
-    // state active texture? -- glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, m_fbo_width, m_fbo_height, 0, format, type, nullptr);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -337,6 +452,7 @@ void Realtime::generateTexture(GLuint &texture, GLint internalFormat, GLint form
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
+<<<<<<< Updated upstream
 void Realtime::setupFramebuffer(GLuint &fbo, GLuint colorTexture, GLuint depthTexture) {
     glGenFramebuffers(1, &fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
@@ -355,6 +471,8 @@ void Realtime::setupFramebuffer(GLuint &fbo, GLuint colorTexture, GLuint depthTe
     glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
 }
 
+=======
+>>>>>>> Stashed changes
 void Realtime::updateSpotLight() {
     m_renderData.lights.clear();
 
@@ -363,7 +481,7 @@ void Realtime::updateSpotLight() {
     spotlight.id = 0;
     spotlight.type = LightType::LIGHT_SPOT;
     spotlight.color = settings.spotColor;  // 50% brighter
-        spotlight.pos = m_camera.getPos();  // light position is camera position - acts as a lantern
+    spotlight.pos = m_camera.getPos();  // light position is camera position - acts as a lantern
     spotlight.dir = m_camera.getLook();  // light direction is camera look direction
     spotlight.function = glm::vec3(0.0f, 0.05f, 0.02f); // attenuation function
     spotlight.angle = 0.5f;  // 30 degrees
@@ -433,13 +551,6 @@ void Realtime::setGlobalUniforms(GLuint shader) {
     glUniform3fv(glGetUniformLocation(shader, "material.diffuse"), 1, &material.cDiffuse[0]);
     glUniform3fv(glGetUniformLocation(shader, "material.specular"), 1, &material.cSpecular[0]);
     glUniform1f(glGetUniformLocation(shader, "material.shininess"), material.shininess);
-}
-
-
-void Realtime::resizeGL(int w, int h) {
-    glViewport(0, 0, size().width() * m_devicePixelRatio, size().height() * m_devicePixelRatio);
-    m_aspect_ratio = static_cast<float>(w) / static_cast<float>(h);
-    m_proj = m_camera.getProjectionMatrix();
 }
 
 void Realtime::sceneChanged() {
