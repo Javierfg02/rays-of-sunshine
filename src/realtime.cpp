@@ -121,48 +121,16 @@ void Realtime::initializeGL() {
 
     // create dof texture uniforms
     glUseProgram(m_shaderManager.dof_shader);
-    GLint hblurTextureLoc = glGetUniformLocation(m_shaderManager.dof_shader, "hblurTexture");
-    glUniform1i(hblurTextureLoc, 0);
-    GLint vblurTextureLoc = glGetUniformLocation(m_shaderManager.dof_shader, "vblurTexture");
-    glUniform1i(vblurTextureLoc, 1);
     GLint colorTextureLoc = glGetUniformLocation(m_shaderManager.dof_shader, "colorTexture");
-    glUniform1i(colorTextureLoc, 2);
+    glUniform1i(colorTextureLoc, 0);
     GLint depthTextureLoc = glGetUniformLocation(m_shaderManager.dof_shader, "depthTexture");
-    glUniform1i(depthTextureLoc, 3);
+    glUniform1i(depthTextureLoc, 1);
     glUseProgram(0);
 
     setupFullscreenQuad();
 
     makeFBO();
 }
-
-// void Realtime::paintGL() {
-//     glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
-//     glViewport(0, 0, m_fbo_width, m_fbo_height);
-//     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-//     // use the building shader
-//     glUseProgram(m_shaderManager.building_shader);
-
-//     // send matrices to shader
-//     glm::mat4 model = m_shapes[0].ctm;
-//     glUniformMatrix4fv(glGetUniformLocation(m_shaderManager.building_shader, "modelMatrix"), 1, GL_FALSE, &model[0][0]);
-//     glUniformMatrix4fv(glGetUniformLocation(m_shaderManager.building_shader, "viewMatrix"), 1, GL_FALSE, &m_view[0][0]);
-//     glUniformMatrix4fv(glGetUniformLocation(m_shaderManager.building_shader, "projMatrix"), 1, GL_FALSE, &m_proj[0][0]);
-
-//     // draw building
-//     glBindVertexArray(m_vao); // vao will keep a reference to the vbo, so only need to bind vao
-//     glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
-//     glBindVertexArray(0);
-//     glUseProgram(0);
-
-//     glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
-//     glViewport(0, 0, m_screen_width, m_screen_height);
-//     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-//     // paint textures
-//     paintTextures();
-// }
 
 void Realtime::resizeGL(int w, int h) {
     glViewport(0, 0, size().width() * m_devicePixelRatio, size().height() * m_devicePixelRatio);
@@ -171,31 +139,6 @@ void Realtime::resizeGL(int w, int h) {
 }
 
 void Realtime::setupFullscreenQuad() {
-    // std::vector<GLfloat> fullscreen_quad_data =
-        // { //    POSITIONS    //    UV COORDS
-        //     -1.0f, 1.0f,  0.0f,   0.0f, 1.0f,
-        //     -1.0f, -1.0f, 0.0f,   0.0f, 0.0f,
-        //     1.0f,  -1.0f, 0.0f,   1.0f, 0.0f,
-        //     1.0f,  1.0f,  0.0f,   1.0f, 1.0f,
-        //     -1.0f, 1.0f,  0.0f,   0.0f, 1.0f,
-        //     1.0f,  -1.0f, 0.0f,   1.0f, 0.0f
-        // };
-
-    // // generate and bind a VBO and a VAO for a fullscreen quad
-    // glGenBuffers(1, &m_fullscreen_vbo);
-    // glBindBuffer(GL_ARRAY_BUFFER, m_fullscreen_vbo);
-    // glBufferData(GL_ARRAY_BUFFER, fullscreen_quad_data.size() * sizeof(GLfloat), fullscreen_quad_data.data(), GL_STATIC_DRAW);
-    // glGenVertexArrays(1, &m_fullscreen_vao);
-    // glBindVertexArray(m_fullscreen_vao);
-
-    // use the dof shader
-    // GLuint dof_shader = m_shaderManager.getShader(ShaderManager::ShaderType::DEPTH_OF_FIELD);
-    // glUseProgram(dof_shader);
-
-    // GLint textureLoc = glGetUniformLocation(dof_shader, "texture");
-    // glUniform1i(textureLoc, 0);
-    // glUseProgram(0);
-
     std::vector<GLfloat> fullscreen_quad_data =
         { //    POSITIONS    //    UV COORDS
             -1.0f, 1.0f,  0.0f,   0.0f, 1.0f,
@@ -272,67 +215,16 @@ void Realtime::setUpArrays(std::vector<float>& allBuildingData, BuildingGenerato
 }
 
 void Realtime::renderFullscreenQuad() {
-  //   glBindVertexArray(m_fullscreen_vao);
-  //   glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
-  //   glBindVertexArray(0);
-
-  //   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)0);
-  //   glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3 * sizeof(float)));
-  //   glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float)));
-
-  //   glBindVertexArray(0);
-  //   glBindBuffer(GL_ARRAY_BUFFER, 0);
-
   glBindVertexArray(m_fullscreen_vao);
   glDrawArrays(GL_TRIANGLES, 0, 6);
   glBindVertexArray(0);
 }
 
-// void Realtime::paintGL() {
-//     // FRAMEBUFFER ISSUE!!
-//     glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
-//     glViewport(0, 0, m_fbo_width, m_fbo_height);
-//     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-//     // use the building shader
-//     glUseProgram(m_shaderManager.building_shader);
-//     GLenum error = glGetError();
-//     if (error != GL_NO_ERROR) {
-//         std::cout << "OpenGL error after glUseProgram: " << error << std::endl;
-//     }
-
-//     // update spot light
-//     this->updateSpotLight();
-
-//     // set global uniforms
-//     this->setGlobalUniforms(m_shaderManager.building_shader);
-
-//     // draw building
-//     glBindVertexArray(m_vao); // vao will keep a reference to the vbo, so only need to bind vao
-//     glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
-//     glBindVertexArray(0);
-
-//     // draw road
-
-//     // after drawing buildings
-//     glBindVertexArray(m_road_vao);
-//     glDrawArrays(GL_TRIANGLES, 0, m_roadVertexCount);
-//     glBindVertexArray(0);
-//     glUseProgram(0);
-
-//     // glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
-//     // glViewport(0, 0, m_screen_width, m_screen_height);
-//     // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-//     // paint textures
-//     // paintTextures();
-
-
 void Realtime::paintGL() {
-    // FRAMEBUFFER ISSUE!!
-    // glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
-    // glViewport(0, 0, m_fbo_width, m_fbo_height);
-    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // bind fbo
+    glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+    glViewport(0, 0, m_fbo_width, m_fbo_height);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // use the building shader
     glUseProgram(m_shaderManager.building_shader);
@@ -373,13 +265,13 @@ void Realtime::paintGL() {
 
     glUseProgram(0);
 
-    // FRAMEBUFFER ISSUE!!
-    // glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
-    // glViewport(0, 0, m_screen_width, m_screen_height);
-    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // unbind fbo
+    glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
+    glViewport(0, 0, m_screen_width, m_screen_height);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // paint textures
-    // paintTextures();
+    paintTextures();
 }
 
 void Realtime::makeFBO(){
@@ -397,9 +289,7 @@ void Realtime::makeFBO(){
     glGenFramebuffers(1, &m_fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
 
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, hblurTexture, 0);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, vblurTexture, 0);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, colorTexture, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTexture, 0);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
 
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -423,12 +313,8 @@ void Realtime::paintTextures() {
 
     // dof combo
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, hblurTexture);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, vblurTexture);
-    glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, colorTexture);
-    glActiveTexture(GL_TEXTURE3);
+    glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, depthTexture);
 
     renderFullscreenQuad();
@@ -436,10 +322,6 @@ void Realtime::paintTextures() {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, 0);
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glActiveTexture(GL_TEXTURE3);
     glBindTexture(GL_TEXTURE_2D, 0);
 
     glUseProgram(0);

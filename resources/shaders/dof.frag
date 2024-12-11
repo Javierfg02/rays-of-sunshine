@@ -4,14 +4,12 @@ in vec2 uv_coord;
 out vec4 fragColor;
 
 uniform sampler2D colorTexture;
-uniform sampler2D hblurTexture;
-uniform sampler2D vblurTexture;
 uniform sampler2D depthTexture;
 
 uniform vec2 uvChangeH;
 uniform vec2 uvChangeV;
 const float focusDepth = 0.5;
-const float blurScale = 5.0;
+const float blurScale = 15.0;
 
 void main() {
     float weights[5] = float[](0.2, 0.15, 0.1, 0.05, 0.025);
@@ -22,8 +20,8 @@ void main() {
     );
     vec4 kernelAdditionH = vec4(0.0);
     for (int i = 0; i < 5; i++) {
-        vec2 scaledUV = uv_coord + kernelOffsetsH[i] * uvChangeH;
-        kernelAdditionH += texture(hblurTexture, scaledUV) * weights[i];
+        vec2 scaledUV = clamp(uv_coord + kernelOffsetsH[i] * uvChangeH, 0.0, 1.0);
+        kernelAdditionH += texture(colorTexture, scaledUV) * weights[i];
     }
 
     // vertical blur
@@ -32,12 +30,12 @@ void main() {
     );
     vec4 kernelAdditionV = vec4(0.0);
     for (int i = 0; i < 5; i++) {
-        vec2 scaledUV = uv_coord + kernelOffsetsV[i] * uvChangeV;
-        kernelAdditionV += texture(vblurTexture, scaledUV) * weights[i];
+        vec2 scaledUV = clamp(uv_coord + kernelOffsetsV[i] * uvChangeV, 0.0, 1.0);
+        kernelAdditionV += texture(colorTexture, scaledUV) * weights[i];
     }
 
     // combine horizontal and vertical blurred results
-    vec4 blurredColor = (kernelAdditionH + kernelAdditionV) * (1.0 / 0.925);
+    vec4 blurredColor = (kernelAdditionH + kernelAdditionV) * (1.0 / 0.525);
 
     // get original color and depth
     vec3 originalColor = texture(colorTexture, uv_coord).rgb;
