@@ -33,8 +33,6 @@ public:
     // shaders
     GLuint dof_shader;
     GLuint building_shader;
-    // GLuint hblur_shader;
-    // GLuint vblur_shader;
 
     void initializeShaders() {
         // buildings shader
@@ -45,23 +43,7 @@ public:
             std::cerr << "Failed to create building shader program" << std::endl;
         }
 
-<<<<<<< Updated upstream
-        // horizontal blur shader
-        hblur_shader = createShaderProgram(ShaderType::HORIZONTAL_BLUR,
-                            ":/resources/shaders/hblur.vert",
-                            ":/resources/shaders/hblur.frag");
-
-        // vertical blur shader
-        vblur_shader = createShaderProgram(ShaderType::VERTICAL_BLUR,
-                            ":/resources/shaders/vblur.vert",
-                            ":/resources/shaders/vblur.frag");
-
         // depth of field shader
-        dof_shader = createShaderProgram(ShaderType::DEPTH_OF_FIELD,
-                            ":/resources/shaders/dof.vert",
-                            ":/resources/shaders/dof.frag");
-=======
-        // Depth of field shader
         dof_shader = createShaderProgram(ShaderType::DEPTH_OF_FIELD,
                             ":/resources/shaders/dof.vert",
                             ":/resources/shaders/dof.frag");
@@ -75,7 +57,6 @@ public:
         // createShaderProgram(ShaderType::SKYBOX,
         //                     ":/resources/shaders/skybox.vert",
         //                     ":/resources/shaders/skybox.frag");
->>>>>>> Stashed changes
     }
 
     /**

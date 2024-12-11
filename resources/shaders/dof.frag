@@ -51,6 +51,6 @@ void main() {
 
     // fragColor = vec4(finalColor, 1.0);
 
-    fragColor = texture(colorTexture, uv_coord);
+    fragColor = 1 - texture(colorTexture, uv_coord);
 
 }
