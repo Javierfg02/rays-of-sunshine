@@ -9,7 +9,7 @@ out vec4 fragColor;
 
 void main()
 {
-    fragColor = texture(hblurTexture, uv_coord);
+    fragColor = 1 - texture(hblurTexture, uv_coord);
 
     // float weights[5] = float[](0.5, 0.25, 0.1, 0.05, 0.025);
     // vec2 kernelOffsets[5] = vec2[](
