@@ -2,7 +2,7 @@
 
 in vec2 uv_coord;
 
-uniform sampler2D hblurTexture;
+uniform sampler2D vblurTexture;
 uniform vec2 uvChangeV;
 
 out vec4 fragColor;
@@ -19,7 +19,9 @@ void main()
     vec4 kernelAddition = vec4(0.0);
     for (int i = 0; i < 5; i++) {
         vec2 scaledUV = uv_coord + kernelOffsets[i] * uvChangeV;
-        kernelAddition += texture(hblurTexture, scaledUV) * weights[i];
+        kernelAddition += texture(vblurTexture, scaledUV) * weights[i];
     }
     fragColor = kernelAddition * (1.0 / 0.925);
+
+    // fragColor = 1 - texture(vblurTexture, uv_coord);
 }

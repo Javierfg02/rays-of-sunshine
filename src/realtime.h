@@ -99,9 +99,12 @@ private:
     void setupFullscreenQuad();
     void renderFullscreenQuad();
 
-    GLuint m_scene_fbo;
-    GLuint m_hblur_fbo;
-    GLuint m_vblur_fbo;
+    // GLuint m_buildings_fbo;
+    // GLuint m_hblur_fbo;
+    // GLuint m_vblur_fbo;
+    // GLuint m_dof_fbo;
+    GLuint m_fbo;
+
     GLuint colorTexture;
     GLuint depthTexture;
     GLuint hblurTexture;

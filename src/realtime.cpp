@@ -123,16 +123,16 @@ void Realtime::initializeGL() {
     glUseProgram(0);
 
     // create hblur texture uniform
-    glUseProgram(m_shaderManager.hblur_shader);
-    GLint hblurTextureLoc = glGetUniformLocation(m_shaderManager.hblur_shader, "hblurTexture");
+    // glUseProgram(m_shaderManager.hblur_shader);
+    GLint hblurTextureLoc = glGetUniformLocation(m_shaderManager.dof_shader, "hblurTexture");
     glUniform1i(hblurTextureLoc, 2);
-    glUseProgram(0);
+    // glUseProgram(0);
 
     // create vblur texture uniform
-    glUseProgram(m_shaderManager.vblur_shader);
-    GLint vblurTextureLoc = glGetUniformLocation(m_shaderManager.vblur_shader, "vblurTexture");
+    // glUseProgram(m_shaderManager.vblur_shader);
+    GLint vblurTextureLoc = glGetUniformLocation(m_shaderManager.dof_shader, "vblurTexture");
     glUniform1i(vblurTextureLoc, 3);
-    glUseProgram(0);
+    // glUseProgram(0);
 
     setupFullscreenQuad();
 
@@ -140,7 +140,7 @@ void Realtime::initializeGL() {
 }
 
 void Realtime::paintGL() {
-    glBindFramebuffer(GL_FRAMEBUFFER, m_scene_fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
     glViewport(0, 0, m_fbo_width, m_fbo_height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -209,64 +209,73 @@ void Realtime::renderFullscreenQuad() {
 }
 
 void Realtime::makeFBO(){
-    // HORIZONTAL BLUR FBO -----------------------------
+    // HORIZONTAL BLUR -----------------------------
     generateTexture(hblurTexture, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE);
-    // setupFramebuffer(m_hblur_fbo, colorTexture, 0);
 
-    // VERTCICAL BLUR FBO -----------------------------
+    // VERTCICAL BLUR -----------------------------
     generateTexture(vblurTexture, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE);
-    // setupFramebuffer(m_vblur_fbo, vblurTexture, 0);
 
-    // GENERAL SCENE FBO -----------------------------
+    // GENERAL SCENE -----------------------------
     generateTexture(colorTexture, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE);
     generateTexture(depthTexture, GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8);
-    setupFramebuffer(m_scene_fbo, colorTexture, depthTexture);
+    // setupFramebuffer(m_fbo, colorTexture, depthTexture); // want to actually show scene_fbo
+
+    // generate fbo
+    glGenFramebuffers(1, &m_fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTexture, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, hblurTexture, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, vblurTexture, 0);
+
+    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (status != GL_FRAMEBUFFER_COMPLETE) {
+        std::cerr << "Framebuffer not complete: " << status << std::endl;
+    }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
 }
 
 void Realtime::paintTextures(){
     // HORIZONTAL BLUR -----------------------------
-    // glBindFramebuffer(GL_FRAMEBUFFER, m_hblur_fbo);
     // glViewport(0, 0, m_fbo_width, m_fbo_height);
-    glUseProgram(m_shaderManager.hblur_shader);
+    glUseProgram(m_shaderManager.dof_shader);
 
-    GLint uvChangeHLoc = glGetUniformLocation(m_shaderManager.hblur_shader, "uvChangeH");
+    GLint uvChangeHLoc = glGetUniformLocation(m_shaderManager.dof_shader, "uvChangeH");
     glUniform2f(uvChangeHLoc, 1.0 / m_fbo_width, 0.0);
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, colorTexture);
-    renderFullscreenQuad();
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, hblurTexture);
+    // renderFullscreenQuad();
 
-    glBindTexture(GL_TEXTURE_2D, 0);
-    // glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glUseProgram(0);
+    // glBindTexture(GL_TEXTURE_2D, 0);
+    // glUseProgram(0);
 
     // VERTICAL BLUR -----------------------------
-    // glBindFramebuffer(GL_FRAMEBUFFER, m_vblur_fbo);
     // glViewport(0, 0, m_fbo_width, m_fbo_height);
-    glUseProgram(m_shaderManager.vblur_shader);
+    // glUseProgram(m_shaderManager.vblur_shader);
 
-    GLint uvChangeVLoc = glGetUniformLocation(m_shaderManager.vblur_shader, "uvChangeV");
+    GLint uvChangeVLoc = glGetUniformLocation(m_shaderManager.dof_shader, "uvChangeV");
     glUniform2f(uvChangeVLoc, 0.0, 1.0 / m_fbo_height);
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, hblurTexture);
-    renderFullscreenQuad();
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, vblurTexture);
+    // renderFullscreenQuad();
 
-    glBindTexture(GL_TEXTURE_2D, 0);
-    // glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glUseProgram(0);
+    // glBindTexture(GL_TEXTURE_2D, 0);
+    // glUseProgram(0);
 
     // DOF COMBINATION -----------------------------
-    glBindFramebuffer(GL_FRAMEBUFFER, m_scene_fbo);
-    glViewport(0, 0, m_fbo_width, m_fbo_height);
-    glUseProgram(m_shaderManager.dof_shader);
+    // glViewport(0, 0, m_fbo_width, m_fbo_height);
+    // glUseProgram(m_shaderManager.dof_shader);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, colorTexture);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, depthTexture);
-    glActiveTexture(GL_TEXTURE3);
-    glBindTexture(GL_TEXTURE_2D, vblurTexture);
+    // glActiveTexture(GL_TEXTURE3);
+    // glBindTexture(GL_TEXTURE_2D, vblurTexture);
 
     renderFullscreenQuad();
 
@@ -274,9 +283,10 @@ void Realtime::paintTextures(){
     glBindTexture(GL_TEXTURE_2D, 0);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, 0);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, 0);
     glActiveTexture(GL_TEXTURE3);
     glBindTexture(GL_TEXTURE_2D, 0);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glUseProgram(0);
 }
 
@@ -300,10 +310,10 @@ void Realtime::setupFramebuffer(GLuint &fbo, GLuint colorTexture, GLuint depthTe
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
     }
 
-    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    if (status != GL_FRAMEBUFFER_COMPLETE) {
-        std::cerr << "Framebuffer not complete: " << status << std::endl;
-    }
+    // GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    // if (status != GL_FRAMEBUFFER_COMPLETE) {
+    //     std::cerr << "Framebuffer not complete: " << status << std::endl;
+    // }
 
     glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
 }
