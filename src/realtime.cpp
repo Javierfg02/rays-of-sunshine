@@ -68,6 +68,7 @@ void Realtime::initializeGL() {
 
     // generate buildings
     std::vector<float> allBuildingData; // building vertex data
+    srand(time(nullptr));
     BuildingGenerator* buildingGenerator = new BuildingGenerator();
     allBuildingData = buildingGenerator->initializeBuildings();
 
@@ -478,66 +479,56 @@ void Realtime::rotateCamera(float deltaX, float deltaY) {
     m_view = m_camera.getViewMatrix();
 }
 
+// Replace the timerEvent implementation:
 void Realtime::timerEvent(QTimerEvent *event) {
     int elapsedms = m_elapsedTimer.elapsed();
-    float deltaTime = elapsedms * 0.001f; // convert milliseconds to seconds always 0.016s elapsed ~= 60fps
-    // std::cout << "deltaTime: " << deltaTime << std::endl;
+    float deltaTime = elapsedms * 0.001f;
     m_elapsedTimer.restart();
 
     glm::vec4 currentPos = m_camera.getPos();
-
-    // // gravity: update vertical velocity and apply to position
-    // if (m_isJumping) {
-    //     m_verticalVelocity -= settings.gravity * deltaTime;
-    //     currentPos.y += m_verticalVelocity * deltaTime;
-    // }
-
-    // // check for ground collision
-    // if (currentPos.y <= settings.min_height) {
-    //     currentPos.y = 0.0f;
-    //     m_verticalVelocity = 0.0f; // Reset vertical velocity on the ground
-    // }
-
-    // movement adjustments
     float moveSpeed = settings.moveSpeed * deltaTime;
+    bool isWalking = false;
 
-    // move forward (W)
+    // Handle forward/backward movement
     if (m_keyMap[Qt::Key_W] && currentPos.x <= 85.f) {
-        this->m_walkingTime += deltaTime;
-        this->t = this->m_walkingTime;
-        // apply bezier curve to camera motion (currently just sinusoidal)
-        currentPos.y = 1.25f * std::abs(std::cos(this->m_walkingTime * 4));
         currentPos.x += moveSpeed;
-    } // move backward (S)
-    else if (m_keyMap[Qt::Key_S] && currentPos.x >= 0.1f) {
-        this->m_walkingTime += deltaTime;
-        this->t = this->m_walkingTime;
-        currentPos.y = 1.25f * std::abs(std::cos(this->m_walkingTime * 4));
+        isWalking = true;
+    } else if (m_keyMap[Qt::Key_S] && currentPos.x >= 0.1f) {
         currentPos.x -= moveSpeed;
-    } else {
-        this->m_walkingTime = this->t;
+        isWalking = true;
     }
 
-    // jump
-    if (m_keyMap[Qt::Key_Space] && currentPos.y <= settings.min_height) {
-        m_isJumping = true;
-        m_verticalVelocity = settings.jump_force; // Apply jump impulse
-    } else {
-        m_isJumping = false;
+    // Handle walking animation
+    if (isWalking) {
+        if (!m_wasWalking) {
+            m_walkCycleTime = 0.0f;
+            m_walkingCurve.resetCurve(currentPos.y);
+        }
+
+        // slower walk cycle
+        float walkSpeed = 2.0f; // Reduced from 4.0f for more natural motion
+        m_walkCycleTime += deltaTime * walkSpeed;
+
+        // get position from Bezier curve
+        BezierPoint point = m_walkingCurve.bezierBasis(m_walkCycleTime);
+        currentPos.y = point.y;
+
+        // remove camera lean modification to preserve rotation
+    } else if (m_wasWalking) {
+        // smoothly return to base height without affecting rotation
+        currentPos.y = glm::mix(currentPos.y, settings.baseHeight, deltaTime * 5.0f);
     }
 
-    // spring
+    // Sprint
     if(m_keyMap[Qt::Key_Shift]) {
         settings.moveSpeed = 5.0f;
     } else {
         settings.moveSpeed = 2.5f;
     }
 
-    // update position and camera
+    m_wasWalking = isWalking;
     m_camera.setPos(currentPos);
     m_view = m_camera.getViewMatrix();
-
-    // call paintGL
     update();
 }
 

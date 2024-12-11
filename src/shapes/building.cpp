@@ -11,7 +11,7 @@ void Building::updateParams() {
     m_buildingDepth = 1.0f + (rand() % (int)settings.buildingMaxWidth) / settings.buildingMaxWidth;
 
     // random tessellation for variety in building faces
-    m_tessellation = 1 + rand() % 4;  // 1 to 4 subdivisions
+    m_tessellation = 1 + rand() % 8;
 
     generateShape();
 }

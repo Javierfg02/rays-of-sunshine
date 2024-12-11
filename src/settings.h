@@ -28,9 +28,9 @@ struct Settings {
     glm::vec3 wallColor = glm::vec3(0.4f, 0.4f, 0.4f);
 
     // gravity
-    float moveSpeed = 1.5f;
+    float moveSpeed = 0.25f;
     float gravity = 9.81;
-    float min_height = 2.0f;
+    float min_height = 1.0f;
     float jump_force = 3.5f;
 
     // camera
@@ -48,8 +48,8 @@ struct Settings {
     glm::vec4 spotColor = glm::vec4(255.f/255.f, 214.f/255.f, 170.f/255.f, 1.0f);
 
     // bezier
-    float baseHeight = 2.0f;
-    float stepHeight = 0.5f;
+    float baseHeight = 1.0f;
+    float stepHeight = 0.15f;
     float stopDuration = 1.0f;
 };
 

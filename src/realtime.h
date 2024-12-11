@@ -71,11 +71,11 @@ private:
     float m_verticalVelocity = 0.0f;
 
     // Bezier
-    Bezier m_walkCurve;
+    Bezier m_walkingCurve;
     float m_walkingTime = 0.0f;
     float m_stopTime = 0.0f;
-    bool m_isWalking = false;
-    bool m_isJumping = false;
+    float m_walkCycleTime = 0.0f;
+    bool m_wasWalking = false;
     float t = 0;
 
     // Shader Manager
