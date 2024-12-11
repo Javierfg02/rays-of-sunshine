@@ -56,6 +56,10 @@ public:
         dof_shader = createShaderProgram(ShaderType::DEPTH_OF_FIELD,
                             ":/resources/shaders/dof.vert",
                             ":/resources/shaders/dof.frag");
+=======
+        // createShaderProgram(ShaderType::DEPTH_OF_FIELD,
+        //                     ":/resources/shaders/dof.vert",
+        //                     ":/resources/shaders/dof.frag");
 
         // // Crepuscular rays shader
         // createShaderProgram(ShaderType::CREPUSCULAR_RAYS,

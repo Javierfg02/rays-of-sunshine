@@ -42,6 +42,7 @@ void Realtime::finish() {
 }
 
 void Realtime::initializeGL() {
+    this->makeCurrent();
     m_devicePixelRatio = this->devicePixelRatio();
     m_defaultFBO = 2;
     m_screen_width = size().width() * m_devicePixelRatio;
@@ -51,7 +52,7 @@ void Realtime::initializeGL() {
     m_timer = startTimer(1000/60);
     m_elapsedTimer.start();
 
-    // Initialize GL
+    // initialize GL
     glewExperimental = GL_TRUE;
     GLenum err = glewInit();
     if (err != GLEW_OK) {
@@ -69,37 +70,41 @@ void Realtime::initializeGL() {
 
     // generate buildings
     std::vector<float> allBuildingData; // building vertex data
+    srand(time(nullptr));
     BuildingGenerator* buildingGenerator = new BuildingGenerator();
     allBuildingData = buildingGenerator->initializeBuildings();
 
+    // clear any existing lights
+    m_renderData.lights.clear();
+
+    // Add a bright directional light for testing
+    // SceneLightData directionalLight;
+    // directionalLight.id = 0;
+    // directionalLight.type = LightType::LIGHT_DIRECTIONAL;
+    // directionalLight.color = glm::vec4(2.0f, 2.0f, 2.0f, 2.0f);  // Bright white light
+    // directionalLight.dir = glm::normalize(glm::vec4(0.3f, 0.3f, 0.3f, 0.0f));
+    // directionalLight.function = glm::vec3(1.0f, 0.0f, 0.0f);
+    // m_renderData.lights.push_back(directionalLight);
+
+    // set default global illumination coefficients
+    m_renderData.globalData.ka = settings.ka;  // low ambient for dark night scene
+    m_renderData.globalData.kd = settings.kd;  // diffuse
+    m_renderData.globalData.ks = settings.ks;  // specular
+
     // set camera to road
     glm::vec3 roadPos = buildingGenerator->getRandomRoadPosition();
-
-    // Position camera at start of road, looking down it
+    // position camera at start of road, looking down it
     m_renderData.cameraData.pos = glm::vec4(roadPos.x + 10.0f, 1.0f, roadPos.z, 1);  // On the road
     m_renderData.cameraData.look = glm::vec4(1, 0, 0, 0); // look down the road (along x-axis)
     m_renderData.cameraData.up = glm::vec4(0, 1, 0, 0);
     m_renderData.cameraData.heightAngle = 45.0f * M_PI / 180.0f;
 
-    m_vertexCount = allBuildingData.size() / 6;
+    m_vertexCount = allBuildingData.size() / 9; // pos, color, normal
 
-    // vao and vbo setup
-    glGenBuffers(1, &m_vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-    glBufferData(GL_ARRAY_BUFFER, allBuildingData.size() * sizeof(float), allBuildingData.data(), GL_STATIC_DRAW);
+    std::cout << "Total vertex data size: " << allBuildingData.size() << std::endl;
+    std::cout << "Calculated vertex count: " << m_vertexCount << std::endl;
 
-    glGenVertexArrays(1, &m_vao);
-    glBindVertexArray(m_vao);
-
-    glEnableVertexAttribArray(0); // position
-    glEnableVertexAttribArray(1); // color
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-
-    glBindVertexArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    m_aspect_ratio = static_cast<float>(width()) / static_cast<float>(height());
+    this->setUpArrays(allBuildingData, buildingGenerator);
 
     // transformation matrices
     m_camera = Camera(m_renderData.cameraData,
@@ -107,7 +112,7 @@ void Realtime::initializeGL() {
                       size().height() * m_devicePixelRatio);
 
     m_view = m_camera.getViewMatrix();
-    m_proj = m_camera.getProjectionMatrix();  // much farther far plane to see more of the city
+    m_proj = m_camera.getProjectionMatrix();
 
     // Since we've baked the transforms into the vertices, we only need an identity matrix
     RenderShapeData buildingShape;
@@ -190,12 +195,82 @@ void Realtime::setupFullscreenQuad() {
     glBufferData(GL_ARRAY_BUFFER, fullscreen_quad_data.size() * sizeof(GLfloat), fullscreen_quad_data.data(), GL_STATIC_DRAW);
     glGenVertexArrays(1, &m_fullscreen_vao);
     glBindVertexArray(m_fullscreen_vao);
+  
+    // use the dof shader
+    // GLuint dof_shader = m_shaderManager.getShader(ShaderManager::ShaderType::DEPTH_OF_FIELD);
+    // glUseProgram(dof_shader);
 
-    // define vao attributes
+    // GLint textureLoc = glGetUniformLocation(dof_shader, "texture");
+    // glUniform1i(textureLoc, 0);
+    // glUseProgram(0);
+
+    // std::vector<GLfloat> fullscreen_quad_data =
+    //     { //    POSITIONS    //    UV COORDS
+    //         -1.0f, 1.0f,  0.0f,   0.0f, 1.0f,
+    //         -1.0f, -1.0f, 0.0f,   0.0f, 0.0f,
+    //         1.0f,  -1.0f, 0.0f,   1.0f, 0.0f,
+    //         1.0f,  1.0f,  0.0f,   1.0f, 1.0f,
+    //         -1.0f, 1.0f,  0.0f,   0.0f, 1.0f,
+    //         1.0f,  -1.0f, 0.0f,   1.0f, 0.0f
+    //     };
+
+    // // generate and bind a VBO and a VAO for a fullscreen quad
+    // glGenBuffers(1, &m_fullscreen_vbo);
+    // glBindBuffer(GL_ARRAY_BUFFER, m_fullscreen_vbo);
+    // glBufferData(GL_ARRAY_BUFFER, fullscreen_quad_data.size() * sizeof(GLfloat), fullscreen_quad_data.data(), GL_STATIC_DRAW);
+    // glGenVertexArrays(1, &m_fullscreen_vao);
+    // glBindVertexArray(m_fullscreen_vao);
+
+    // // define vao attributes
+    // glEnableVertexAttribArray(0);
+    // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), reinterpret_cast<void *>(0));
+    // glEnableVertexAttribArray(1);
+    // glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), reinterpret_cast<void *>(3 * sizeof(GLfloat)));
+
+    // // unbind the fullscreen quad's VBO and VAO
+    // glBindBuffer(GL_ARRAY_BUFFER, 0);
+    // glBindVertexArray(0);
+
+    // makeFBO();
+}
+
+void Realtime::setUpArrays(std::vector<float>& allBuildingData, BuildingGenerator* buildingGenerator) {
+
+    // Buildings vao and vbo setup
+    glGenBuffers(1, &m_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+
+    glBufferData(GL_ARRAY_BUFFER, allBuildingData.size() * sizeof(float), allBuildingData.data(), GL_STATIC_DRAW);
+
+    glGenVertexArrays(1, &m_vao);
+    glBindVertexArray(m_vao);
+
+    glEnableVertexAttribArray(0); // position
+    glEnableVertexAttribArray(1); // normal
+    glEnableVertexAttribArray(2); // color
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)0); // position
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3 * sizeof(float))); // normal
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float))); // color
+
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    // Generate road data
+    std::vector<float> roadData = buildingGenerator->getRoadData();
+    m_roadVertexCount = roadData.size() / 9; // 9 floats per vertex
+
+    // Create and bind road VAO/VBO
+    glGenBuffers(1, &m_road_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, m_road_vbo);
+    glBufferData(GL_ARRAY_BUFFER, roadData.size() * sizeof(float), roadData.data(), GL_STATIC_DRAW);
+
+    glGenVertexArrays(1, &m_road_vao);
+    glBindVertexArray(m_road_vao);
+
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), reinterpret_cast<void *>(0));
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), reinterpret_cast<void *>(3 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(2);
 
     // unbind the fullscreen quad's VBO and VAO
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -206,6 +281,51 @@ void Realtime::renderFullscreenQuad() {
     glBindVertexArray(m_fullscreen_vao);
     glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
     glBindVertexArray(0);
+  
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float)));
+
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void Realtime::paintGL() {
+    // glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+    // glViewport(0, 0, m_fbo_width, m_fbo_height);
+    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // use the building shader
+    GLuint building_shader = m_shaderManager.getShader(ShaderManager::ShaderType::BUILDING);
+    glUseProgram(building_shader);
+    GLenum error = glGetError();
+    if(error != GL_NO_ERROR) {
+        std::cout << "OpenGL error after glUseProgram: " << error << std::endl;
+    }
+
+    // update spot light
+    this->updateSpotLight();
+
+    // set global uniforms
+    this->setGlobalUniforms(building_shader);
+
+    // draw building
+    glBindVertexArray(m_vao); // vao will keep a reference to the vbo, so only need to bind vao
+    glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
+    glBindVertexArray(0);
+
+    // After drawing buildings
+    glBindVertexArray(m_road_vao);
+    glDrawArrays(GL_TRIANGLES, 0, m_roadVertexCount);
+    glBindVertexArray(0);
+    glUseProgram(0);
+
+    // glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
+    // glViewport(0, 0, m_screen_width, m_screen_height);
+    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // PAINT TEXTURE -----------------------------
+    // paintTexture(m_fbo_texture);
 }
 
 void Realtime::makeFBO(){
@@ -300,6 +420,92 @@ void Realtime::setupFramebuffer(GLuint &fbo, GLuint colorTexture, GLuint depthTe
     // }
 
     glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
+
+void Realtime::updateSpotLight() {
+    m_renderData.lights.clear();
+
+    // Create a spotlight that follows the camera
+    SceneLightData spotlight;
+    spotlight.id = 0;
+    spotlight.type = LightType::LIGHT_SPOT;
+    spotlight.color = settings.spotColor;  // 50% brighter
+        spotlight.pos = m_camera.getPos();  // light position is camera position - acts as a lantern
+    spotlight.dir = m_camera.getLook();  // light direction is camera look direction
+    spotlight.function = glm::vec3(0.0f, 0.05f, 0.02f); // attenuation function
+    spotlight.angle = 0.5f;  // 30 degrees
+    spotlight.penumbra = 0.2f;
+    m_renderData.lights.push_back(spotlight);
+}
+
+void Realtime::setGlobalUniforms(GLuint shader) {
+    // Send camera position for specular calculations
+    glm::vec3 cameraPos = glm::vec3(m_camera.getPos());
+    glUniform3fv(glGetUniformLocation(shader, "cameraPos"), 1, &cameraPos[0]);
+
+    // Send matrices
+    glm::mat4 model = m_shapes[0].ctm;
+    glUniformMatrix4fv(glGetUniformLocation(shader, "modelMatrix"), 1, GL_FALSE, &model[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(shader, "viewMatrix"), 1, GL_FALSE, &m_view[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(shader, "projMatrix"), 1, GL_FALSE, &m_proj[0][0]);
+
+    // Send lighting coefficients
+    glUniform1f(glGetUniformLocation(shader, "ka"), m_renderData.globalData.ka);
+    glUniform1f(glGetUniformLocation(shader, "kd"), m_renderData.globalData.kd);
+    glUniform1f(glGetUniformLocation(shader, "ks"), m_renderData.globalData.ks);
+
+    // Send light data
+    int numLights = m_renderData.lights.size();
+    glUniform1i(glGetUniformLocation(shader, "numLights"), numLights);
+
+    for (int i = 0; i < numLights; i++) {
+        std::string prefix = "lights[" + std::to_string(i) + "].";
+        SceneLightData light = m_renderData.lights[i];
+
+        glUniform1i(glGetUniformLocation(shader, (prefix + "type").c_str()),
+                    static_cast<int>(light.type));
+        glUniform3fv(glGetUniformLocation(shader, (prefix + "color").c_str()),
+                     1, &light.color[0]);
+        glUniform3fv(glGetUniformLocation(shader, (prefix + "function").c_str()),
+                     1, &light.function[0]);
+
+        if (light.type != LightType::LIGHT_DIRECTIONAL) {
+            glUniform4fv(glGetUniformLocation(shader, (prefix + "pos").c_str()),
+                         1, &light.pos[0]);
+        }
+
+        if (light.type != LightType::LIGHT_POINT) {
+            glUniform4fv(glGetUniformLocation(shader, (prefix + "dir").c_str()),
+                         1, &light.dir[0]);
+        }
+
+        if (light.type == LightType::LIGHT_SPOT) {
+            glUniform1f(glGetUniformLocation(shader, (prefix + "penumbra").c_str()),
+                        light.penumbra);
+            glUniform1f(glGetUniformLocation(shader, (prefix + "angle").c_str()),
+                        light.angle);
+        }
+    }
+
+    // set base material properties
+    SceneMaterial material = {
+        glm::vec4(0.2f), // ambient
+        glm::vec4(0.7f), // diffuse
+        glm::vec4(0.3f), // specular
+        32.0f,           // shininess
+        glm::vec4(1.1f)  // reflective
+    };
+
+    glUniform3fv(glGetUniformLocation(shader, "material.ambient"), 1, &material.cAmbient[0]);
+    glUniform3fv(glGetUniformLocation(shader, "material.diffuse"), 1, &material.cDiffuse[0]);
+    glUniform3fv(glGetUniformLocation(shader, "material.specular"), 1, &material.cSpecular[0]);
+    glUniform1f(glGetUniformLocation(shader, "material.shininess"), material.shininess);
+}
+
+
+void Realtime::resizeGL(int w, int h) {
+    glViewport(0, 0, size().width() * m_devicePixelRatio, size().height() * m_devicePixelRatio);
+    m_aspect_ratio = static_cast<float>(w) / static_cast<float>(h);
+    m_proj = m_camera.getProjectionMatrix();
 }
 
 void Realtime::sceneChanged() {
@@ -400,66 +606,51 @@ void Realtime::rotateCamera(float deltaX, float deltaY) {
 
 void Realtime::timerEvent(QTimerEvent *event) {
     int elapsedms = m_elapsedTimer.elapsed();
-    float deltaTime = elapsedms * 0.001f; // convert milliseconds to seconds always 0.016s elapsed ~= 60fps
-    // std::cout << "deltaTime: " << deltaTime << std::endl;
+    float deltaTime = elapsedms * 0.001f;
     m_elapsedTimer.restart();
 
     glm::vec4 currentPos = m_camera.getPos();
-
-    // // gravity: update vertical velocity and apply to position
-    // if (m_isJumping) {
-    //     m_verticalVelocity -= settings.gravity * deltaTime;
-    //     currentPos.y += m_verticalVelocity * deltaTime;
-    // }
-
-    // // check for ground collision
-    // if (currentPos.y <= settings.min_height) {
-    //     currentPos.y = 0.0f;
-    //     m_verticalVelocity = 0.0f; // Reset vertical velocity on the ground
-    // }
-
-    // movement adjustments
     float moveSpeed = settings.moveSpeed * deltaTime;
+    bool isWalking = false;
 
-    // move forward (W)
+    // handle forward/backward movement
     if (m_keyMap[Qt::Key_W] && currentPos.x <= 85.f) {
-        this->m_walkingTime += deltaTime;
-        this->t = this->m_walkingTime;
-        // apply bezier curve to camera motion (currently just sinusoidal)
-        currentPos.y = 1.25f * std::abs(std::cos(this->m_walkingTime * 4));
         currentPos.x += moveSpeed;
-    } // move backward (S)
-    else if (m_keyMap[Qt::Key_S] && currentPos.x >= 0.1f) {
-        this->m_walkingTime += deltaTime;
-        this->t = this->m_walkingTime;
-        currentPos.y = 1.25f * std::abs(std::cos(this->m_walkingTime * 4));
+        isWalking = true;
+    } else if (m_keyMap[Qt::Key_S] && currentPos.x >= 0.1f) {
         currentPos.x -= moveSpeed;
-    } else {
-        this->m_walkingTime = this->t;
+        isWalking = true;
     }
 
-    std::cout << "currentPos.y: " << currentPos.y << std::endl;
+    // handle walking animation
+    if (isWalking) {
+        if (!m_wasWalking) {
+            m_walkCycleTime = 0.0f;
+            m_walkingCurve.resetCurve(currentPos.y);
+        }
 
-    // jump
-    if (m_keyMap[Qt::Key_Space] && currentPos.y <= settings.min_height) {
-        m_isJumping = true;
-        m_verticalVelocity = settings.jump_force; // Apply jump impulse
-    } else {
-        m_isJumping = false;
+        float walkSpeed = settings.moveSpeed;
+        m_walkCycleTime += deltaTime * walkSpeed;
+
+        // get position from Bezier curve
+        BezierPoint point = m_walkingCurve.bezierBasis(m_walkCycleTime);
+        currentPos.y = point.y;
+
+    } else if (m_wasWalking) {
+        // smoothly return to base height
+        currentPos.y = glm::mix(currentPos.y, settings.baseHeight, deltaTime * 5.0f);
     }
 
-    // spring
+    // sprint
     if(m_keyMap[Qt::Key_Shift]) {
-        settings.moveSpeed = 5.0f;
+        settings.moveSpeed = settings.sprintSpeed;
     } else {
-        settings.moveSpeed = 2.5f;
+        settings.moveSpeed = 1.0f;
     }
 
-    // update position and camera
+    m_wasWalking = isWalking;
     m_camera.setPos(currentPos);
     m_view = m_camera.getViewMatrix();
-
-    // call paintGL
     update();
 }
 

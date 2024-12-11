@@ -3,8 +3,8 @@
 
 Bezier::Bezier() {
     p0 = {settings.baseHeight, 0.0f};
-    p1 = {p0.y + settings.stepHeight, 0.2f};  // up and slightly forward
-    p2 = {p0.y + settings.stepHeight * 0.5f, -0.2f};  // less height, backward lean
+    p1 = {p0.y + settings.stepHeight, 0.15f};
+    p2 = {p0.y + settings.stepHeight * 0.7f, -0.1f};
     p3 = {settings.baseHeight, 0.0f};
 }
 
@@ -31,3 +31,10 @@ BezierPoint Bezier::bezierBasis(float t) {
     return result;
 }
 
+void Bezier::resetCurve(float startY) {
+    float heightDiff = startY - settings.baseHeight;
+    p0 = {startY, 0.0f};
+    p1 = {startY + settings.stepHeight, 0.15f};
+    p2 = {startY + settings.stepHeight * 0.5f, -0.2f};
+    p3 = {startY, 0.0f};
+}
