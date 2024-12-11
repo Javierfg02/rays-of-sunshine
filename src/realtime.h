@@ -18,7 +18,6 @@
 #include "./utils/shadermanager.h"
 #include "shapes/building.h"
 #include "./features/bezier.h"
-#include "./features/buildinggenerator.h"
 
 class Realtime : public QOpenGLWidget
 {
@@ -46,10 +45,6 @@ private:
     void mouseMoveEvent(QMouseEvent *event) override;
     void timerEvent(QTimerEvent *event) override;
 
-    // Phong
-    void setGlobalUniforms(GLuint shader);
-    void updateSpotLight();
-
     // Tick Related Variables
     int m_timer;                                        // Stores timer which attempts to run ~60 times per second
     QElapsedTimer m_elapsedTimer;                       // Stores timer which keeps track of actual time between frames
@@ -71,25 +66,19 @@ private:
     float m_verticalVelocity = 0.0f;
 
     // Bezier
-    Bezier m_walkingCurve;
+    Bezier m_walkCurve;
     float m_walkingTime = 0.0f;
     float m_stopTime = 0.0f;
-    float m_walkCycleTime = 0.0f;
-    bool m_wasWalking = false;
+    bool m_isWalking = false;
+    bool m_isJumping = false;
     float t = 0;
 
     // Shader Manager
     ShaderManager& m_shaderManager = ShaderManager::getInstance();
 
     // VBO/VAO
-    void setUpArrays(std::vector<float>& allBuildingData, BuildingGenerator* buildingGenerator);
     GLuint m_vbo;
     GLuint m_vao;
-
-    // road VBO/VAO
-    GLuint m_road_vbo;
-    GLuint m_road_vao;
-    int m_roadVertexCount;
 
     // transforamtion matrices
     glm::mat4 m_model = glm::mat4(1);
@@ -122,6 +111,7 @@ private:
     GLuint vblurTexture;
     GLuint m_fullscreen_vbo;
     GLuint m_fullscreen_vao;
+
     GLuint m_defaultFBO;
     int m_fbo_width;
     int m_fbo_height;

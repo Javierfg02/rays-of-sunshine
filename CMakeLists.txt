@@ -69,6 +69,8 @@ add_library(StaticGLEW STATIC glew/src/glew.c
     src/utils/shadermanager.h
     resources/shaders/building.vert
     resources/shaders/building.frag
+    resources/shaders/default.frag
+    resources/shaders/default.vert
     resources/shaders/dof.frag
     resources/shaders/dof.vert
     src/utils/camera.h src/utils/camera.cpp
@@ -99,6 +101,8 @@ qt6_add_resources(${PROJECT_NAME} "Resources"
     PREFIX
         "/"
     FILES
+        resources/shaders/default.frag
+        resources/shaders/default.vert
         resources/shaders/building.frag
         resources/shaders/building.vert
         resources/shaders/dof.frag

@@ -1,16 +1,17 @@
-// building.h
 #ifndef BUILDING_H
 #define BUILDING_H
 
 #include <vector>
 #include <glm/glm.hpp>
-#include "cube.h"
-#include "./utils/scenedata.h"
 
 class Building {
 public:
     Building() = default;
+
+    // Update building parameters
     void updateParams();
+
+    // Generate vertex data for the building
     std::vector<float> generateShape();
 
 private:
@@ -20,20 +21,16 @@ private:
     float m_floorHeight = 1.0f;
     float m_buildingWidth = 2.0f;
     float m_buildingDepth = 2.0f;
-    int m_tessellation = 1;  // Corresponds to cube param1
 
-    // Cube instance for generating building sections
-    Cube m_cube;
-
+    // Vertex data storage
     std::vector<float> m_vertexData;
-    SceneMaterial sceneMaterial {glm::vec4(0.5f), glm::vec4(0.5f), glm::vec4(0.5f), 0.1};
 
-    // Helper functions
-    void generateBuildingSection(float width, float height, float depth, float xOffset, float yOffset, float zOffset);
+    // Helper functions for building construction
+    void setVertexData();
+    void makeFace(glm::vec3 topLeft, glm::vec3 topRight,
+                  glm::vec3 bottomLeft, glm::vec3 bottomRight);
     void addWindows();
-    void insertVec3(glm::vec3 pos, glm::vec3 normal, glm::vec3 color);
-    void transformVertices(std::vector<float>& vertices, float scale_x, float scale_y, float scale_z,
-                           float translate_x, float translate_y, float translate_z);
+    void insertVec3WithColor(std::vector<float> &data, glm::vec3 pos, glm::vec3 color);
 };
 
 #endif // BUILDING_H
