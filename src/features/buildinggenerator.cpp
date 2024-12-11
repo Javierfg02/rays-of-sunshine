@@ -183,7 +183,7 @@ std::vector<float> BuildingGenerator::generateRoad() {
 }
 
 void BuildingGenerator::addQuad(glm::vec3 bl, glm::vec3 br, glm::vec3 tl, glm::vec3 tr,
-    glm::vec3 normal, glm::vec3 color) {
+                                glm::vec3 normal, glm::vec3 color) {
 
     // First triangle (bl, br, tr)
     // bottom left vertex
