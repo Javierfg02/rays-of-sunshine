@@ -37,39 +37,28 @@ public:
     GLuint vblur_shader;
 
     void initializeShaders() {
-        // Buildings shader
+        // buildings shader
         building_shader = createShaderProgram(ShaderType::BUILDING,
-                            ":/resources/shaders/building.vert",
-                            ":/resources/shaders/building.frag");
+                                              ":/resources/shaders/building.vert",
+                                              ":/resources/shaders/building.frag");
+        if (building_shader == 0) {
+            std::cerr << "Failed to create building shader program" << std::endl;
+        }
 
-        // Horizontal blur shader
+        // horizontal blur shader
         hblur_shader = createShaderProgram(ShaderType::HORIZONTAL_BLUR,
                             ":/resources/shaders/hblur.vert",
                             ":/resources/shaders/hblur.frag");
 
-        // Vertical blur shader
+        // vertical blur shader
         vblur_shader = createShaderProgram(ShaderType::VERTICAL_BLUR,
                             ":/resources/shaders/vblur.vert",
                             ":/resources/shaders/vblur.frag");
 
-        // Depth of field shader
+        // depth of field shader
         dof_shader = createShaderProgram(ShaderType::DEPTH_OF_FIELD,
                             ":/resources/shaders/dof.vert",
                             ":/resources/shaders/dof.frag");
-=======
-        // createShaderProgram(ShaderType::DEPTH_OF_FIELD,
-        //                     ":/resources/shaders/dof.vert",
-        //                     ":/resources/shaders/dof.frag");
-
-        // // Crepuscular rays shader
-        // createShaderProgram(ShaderType::CREPUSCULAR_RAYS,
-        //                     ":/resources/shaders/rays.vert",
-        //                     ":/resources/shaders/rays.frag");
-
-        // // Skybox shader
-        // createShaderProgram(ShaderType::SKYBOX,
-        //                     ":/resources/shaders/skybox.vert",
-        //                     ":/resources/shaders/skybox.frag");
     }
 
     /**
